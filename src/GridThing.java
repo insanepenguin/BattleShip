@@ -3,6 +3,15 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.border.*;
+/**
+* This class is here for me to experiment on how best to implement the gui and any user interactivity
+* I want to keep it separate from Client.java for now because it doesn't have any server <-> client connection code
+* Comments are hard, I'll write more tomorrow, if this still looks confusing as hell by then just ask me about it
+* Also I'm not gonna write javadoc comments, this opener is more of a meme than anything
+*
+* @author Ben Shapiro
+* @version 2019-10-27
+*/
 
 
 public class GridThing extends JFrame implements ActionListener {
