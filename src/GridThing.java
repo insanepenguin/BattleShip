@@ -25,6 +25,7 @@ public class GridThing extends JFrame implements ActionListener {
    private Coordinate[] carrier = new Coordinate[5];
    private Coordinate[] cruiser = new Coordinate[4];
    private Coordinate[] destroyer = new Coordinate[3];
+   private Coordinate[] submarine = new Coordinate[3];
    private Coordinate[] patrolBoat = new Coordinate[2];
    
    //these are the gui components that need to be declared globally
@@ -33,6 +34,7 @@ public class GridThing extends JFrame implements ActionListener {
    private JButton jbCarrier = new JButton("Carrier");
    private JButton jbCruiser = new JButton("Cruiser");
    private JButton jbDestroyer = new JButton("Destroyer");
+   private JButton jbSubmarine = new JButton("Submarine");
    private JButton jbPatrolBoat = new JButton("Patrol Boat");
    private JButton jbRotate = new JButton("Rotate");
    private JButton jbReady = new JButton("READY");
@@ -57,6 +59,7 @@ public class GridThing extends JFrame implements ActionListener {
       jbCarrier.addActionListener(this);
       jbCruiser.addActionListener(this);
       jbDestroyer.addActionListener(this);
+      jbSubmarine.addActionListener(this);
       jbPatrolBoat.addActionListener(this);
       jbRotate.addActionListener(this);
       jbReady.addActionListener(this);
@@ -64,6 +67,7 @@ public class GridThing extends JFrame implements ActionListener {
       jpShips.add(jbCarrier);
       jpShips.add(jbCruiser);
       jpShips.add(jbDestroyer);
+      jpShips.add(jbSubmarine);
       jpShips.add(jbPatrolBoat);
       jpShips.add(jbRotate);
       jpShips.add(jbReady);
@@ -147,6 +151,10 @@ public class GridThing extends JFrame implements ActionListener {
                      clear(destroyer);
                      place(destroyer);
                   }
+                  else if(selected == submarine) {
+                     clear(submarine);
+                     place(submarine);
+                  }
                   else if(selected == patrolBoat) {
                      clear(patrolBoat);
                      place(patrolBoat);
@@ -158,7 +166,7 @@ public class GridThing extends JFrame implements ActionListener {
                }
                //this is a check to see if it needs to enable or disable the ready state
                // "ready" means you can start the battle, so all your ships are placed
-               if(carrier[0] != null && cruiser[0] != null && destroyer[0] != null && patrolBoat[0] != null) jbReady.setEnabled(true);
+               if(carrier[0] != null && cruiser[0] != null && destroyer[0] != null && submarine[0] != null && patrolBoat[0] != null) jbReady.setEnabled(true);
             }
          });
       }
@@ -166,10 +174,8 @@ public class GridThing extends JFrame implements ActionListener {
       //method to place a ship down
       //@param Coordinatep[] coord, the ship being placed
       public void place(Coordinate[] coord) {
-         
          //do this for the length of the ship, so like carrier 5 cruiser 4 etc
          for(int i = 0; i < coord.length; i++) {
-            
             //check horizontal/vertical placement
             if(rotate) {
                //add the coordinate to the ship array
@@ -209,12 +215,14 @@ public class GridThing extends JFrame implements ActionListener {
                   if(Arrays.asList(carrier).contains(coordinates[x][y + i]) && selected != carrier) throw new ArrayIndexOutOfBoundsException();
                   else if(Arrays.asList(cruiser).contains(coordinates[x][y + i]) && selected != cruiser) throw new ArrayIndexOutOfBoundsException();
                   else if(Arrays.asList(destroyer).contains(coordinates[x][y + i]) && selected != destroyer) throw new ArrayIndexOutOfBoundsException();
+                  else if(Arrays.asList(submarine).contains(coordinates[x][y + i]) && selected != submarine) throw new ArrayIndexOutOfBoundsException();
                   else if(Arrays.asList(patrolBoat).contains(coordinates[x][y + i]) && selected != patrolBoat) throw new ArrayIndexOutOfBoundsException();
                }
                else{
                   if(Arrays.asList(carrier).contains(coordinates[x + i][y]) && selected != carrier) throw new ArrayIndexOutOfBoundsException();
                   else if(Arrays.asList(cruiser).contains(coordinates[x + i][y]) && selected != cruiser) throw new ArrayIndexOutOfBoundsException();
                   else if(Arrays.asList(destroyer).contains(coordinates[x + i][y]) && selected != destroyer) throw new ArrayIndexOutOfBoundsException();
+                  else if(Arrays.asList(submarine).contains(coordinates[x + i][y]) && selected != submarine) throw new ArrayIndexOutOfBoundsException();
                   else if(Arrays.asList(patrolBoat).contains(coordinates[x + i][y]) && selected != patrolBoat) throw new ArrayIndexOutOfBoundsException();
                }
             }
@@ -250,6 +258,7 @@ public class GridThing extends JFrame implements ActionListener {
       if(pressedButton == jbCarrier) selected = carrier;
       else if(pressedButton == jbCruiser) selected = cruiser;
       else if(pressedButton == jbDestroyer) selected = destroyer;
+      else if(pressedButton == jbSubmarine) selected = submarine;
       else if(pressedButton == jbPatrolBoat) selected = patrolBoat;
       else if(pressedButton == jbRotate) {
          if (rotate == true) rotate = false;
