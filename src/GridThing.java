@@ -15,8 +15,8 @@ import javax.swing.border.*;
 
 public class GridThing extends JFrame implements ActionListener {
 
-   //the state of the game, what the player is doing, it's displayed up top
-   private Coordinate[] state;
+   //which ship the player is placing down, if they aren't in the placing phase it's null
+   private Coordinate[] selected;
    
    //the grid has a collection of coordinates, they're referred to by their position in this array
    private Coordinate[][] coordinates = new Coordinate[10][10];
@@ -99,9 +99,9 @@ public class GridThing extends JFrame implements ActionListener {
          x = _x;
          y = _y;
          
-         //this is setting up the visuals of the component, they're little black boxes with gray inside
+         //this is setting up the visuals of the component, they're little black boxes with blue inside
          //for now everything is colors, if we decide to go way overboard we could be pictures and stuff
-         setBackground(Color.GRAY);
+         setBackground(Color.BLUE);
          setPreferredSize(new Dimension(50, 50));
          setBorder(new LineBorder(Color.BLACK, 1));
          
@@ -113,24 +113,17 @@ public class GridThing extends JFrame implements ActionListener {
             //it's a bit chunky, I'd like to implement a better way to handle rotating
             public void mouseEntered(MouseEvent me) {
                try {
-                  shade(Color.RED, Color.GREEN);
+                  shade(Color.LIGHT_GRAY, Color.CYAN);
                }
-               catch(ArrayIndexOutOfBoundsException aioobe) {
-                  // if you hover your ship out of bounds, it will shade RED
-                  setBackground(Color.RED);
-               }
+               catch(ArrayIndexOutOfBoundsException aioobe) {}
             }
-            
             //this is basically the same as the first method, but in reverse
             //it puts the colors back to their normal (non hovering) state. 
             public void mouseExited(MouseEvent me) {
                try {
-                  shade(Color.BLACK, Color.GRAY);
+                  shade(Color.GRAY, Color.BLUE);
                }
-               catch(ArrayIndexOutOfBoundsException aioobe) {
-                  if(occupied) setBackground(Color.BLACK);
-                  else setBackground(Color.GRAY);
-               }
+               catch(ArrayIndexOutOfBoundsException aioobe) {}
             }
             
             //this is when you click to place the ship down on the grid
@@ -142,19 +135,19 @@ public class GridThing extends JFrame implements ActionListener {
                   //it checks what ship we're placing, then deletes any old one and places a new one
                   //this is so that you can't have a fleet of like 5 aircraft carriers or smth
                   //we can add more ships at any time just lmk, I only did 4 cus I think one is the same size?
-                  if(state == carrier) {
+                  if(selected == carrier) {
                      clear(carrier);
                      place(carrier);
                   }
-                  else if(state == cruiser) {
+                  else if(selected == cruiser) {
                      clear(cruiser);
                      place(cruiser);
                   }
-                  else if(state == destroyer) {
+                  else if(selected == destroyer) {
                      clear(destroyer);
                      place(destroyer);
                   }
-                  else if(state == patrolBoat) {
+                  else if(selected == patrolBoat) {
                      clear(patrolBoat);
                      place(patrolBoat);
                   }
@@ -186,15 +179,16 @@ public class GridThing extends JFrame implements ActionListener {
                coord[i] = coordinates[x + i][y];
             }
             //visually show that the coordinate is occupied by a ship
-            coord[i].setBackground(Color.BLACK);
+            coord[i].setBackground(Color.GRAY);
             //set that coordinate as occupied by a ship
             coord[i].occupied = true;
          }
       }
       
+      //method that colors the coordinates when you're hovering on them
       public void shade(Color occ, Color vac) {
-         if(state != null) {
-            for(int i = 0; i < state.length; i++) {
+         if(selected != null) {
+            for(int i = 0; i < selected.length; i++) {
                if(rotate) {
                   if(coordinates[x][y + i].occupied) coordinates[x][y + i].setBackground(occ);
                   else coordinates[x][y + i].setBackground(vac);
@@ -207,40 +201,41 @@ public class GridThing extends JFrame implements ActionListener {
          }
       }
       
+      //checking to make sure the ship doesn't overlap with others (it's okay to overlap with itself)
       public void check() throws ArrayIndexOutOfBoundsException {
-         if(state != null) {
-            for(int i = 0; i < state.length; i++) {
+         if(selected != null) {
+            for(int i = 0; i < selected.length; i++) {
                if(rotate) {
-                  if(Arrays.asList(carrier).contains(coordinates[x][y + i]) && state != carrier) throw new ArrayIndexOutOfBoundsException();
-                  else if(Arrays.asList(cruiser).contains(coordinates[x][y + i]) && state != cruiser) throw new ArrayIndexOutOfBoundsException();
-                  else if(Arrays.asList(destroyer).contains(coordinates[x][y + i]) && state != destroyer) throw new ArrayIndexOutOfBoundsException();
-                  else if(Arrays.asList(patrolBoat).contains(coordinates[x][y + i]) && state != patrolBoat) throw new ArrayIndexOutOfBoundsException();
+                  if(Arrays.asList(carrier).contains(coordinates[x][y + i]) && selected != carrier) throw new ArrayIndexOutOfBoundsException();
+                  else if(Arrays.asList(cruiser).contains(coordinates[x][y + i]) && selected != cruiser) throw new ArrayIndexOutOfBoundsException();
+                  else if(Arrays.asList(destroyer).contains(coordinates[x][y + i]) && selected != destroyer) throw new ArrayIndexOutOfBoundsException();
+                  else if(Arrays.asList(patrolBoat).contains(coordinates[x][y + i]) && selected != patrolBoat) throw new ArrayIndexOutOfBoundsException();
                }
                else{
-                  if(Arrays.asList(carrier).contains(coordinates[x + i][y]) && state != carrier) throw new ArrayIndexOutOfBoundsException();
-                  else if(Arrays.asList(cruiser).contains(coordinates[x + i][y]) && state != cruiser) throw new ArrayIndexOutOfBoundsException();
-                  else if(Arrays.asList(destroyer).contains(coordinates[x + i][y]) && state != destroyer) throw new ArrayIndexOutOfBoundsException();
-                  else if(Arrays.asList(patrolBoat).contains(coordinates[x + i][y]) && state != patrolBoat) throw new ArrayIndexOutOfBoundsException();
+                  if(Arrays.asList(carrier).contains(coordinates[x + i][y]) && selected != carrier) throw new ArrayIndexOutOfBoundsException();
+                  else if(Arrays.asList(cruiser).contains(coordinates[x + i][y]) && selected != cruiser) throw new ArrayIndexOutOfBoundsException();
+                  else if(Arrays.asList(destroyer).contains(coordinates[x + i][y]) && selected != destroyer) throw new ArrayIndexOutOfBoundsException();
+                  else if(Arrays.asList(patrolBoat).contains(coordinates[x + i][y]) && selected != patrolBoat) throw new ArrayIndexOutOfBoundsException();
                }
             }
          }
       }
       
+      //clearing a ship from the board, for if you want to place it somewhere else
+      //the placements of the ships aren't final until you hit the ready button
+      public void clear(Coordinate[] coord) {
+         if(coord[0] != null) {
+            for(int i = 0; i < coord.length; i++) {
+               coord[i].setBackground(Color.BLUE);
+               coord[i].occupied = false;
+               coord[i] = null;
+            }
+         }
+      }
+         
       //toString for each coordinate, just for our testing purposes, no use in game
       public String toString() {
          return "Coordinate (" + x + ", " + y + ") - Occupied: " + occupied + ", Shot: " + shot;
-      }
-   }
-   
-   //clearing a ship from the board, for if you want to place it somewhere else
-   //the placements of the ships aren't final until you hit the ready button
-   public void clear(Coordinate[] coord) {
-      if(coord[0] != null) {
-         for(int i = 0; i < coord.length; i++) {
-            coord[i].setBackground(Color.GRAY);
-            coord[i].occupied = false;
-            coord[i] = null;
-         }
       }
    }
    
@@ -252,16 +247,16 @@ public class GridThing extends JFrame implements ActionListener {
    //button stuff, comments are hard
    public void actionPerformed(ActionEvent ae) {
       Object pressedButton = ae.getSource();
-      if(pressedButton == jbCarrier) state = carrier;
-      else if(pressedButton == jbCruiser) state = cruiser;
-      else if(pressedButton == jbDestroyer) state = destroyer;
-      else if(pressedButton == jbPatrolBoat) state = patrolBoat;
+      if(pressedButton == jbCarrier) selected = carrier;
+      else if(pressedButton == jbCruiser) selected = cruiser;
+      else if(pressedButton == jbDestroyer) selected = destroyer;
+      else if(pressedButton == jbPatrolBoat) selected = patrolBoat;
       else if(pressedButton == jbRotate) {
          if (rotate == true) rotate = false;
          else rotate = true;
       }
       else {
-         state = null;
+         selected = null;
          jpFireControl.setVisible(true);
          jpShips.setVisible(false);
       }
