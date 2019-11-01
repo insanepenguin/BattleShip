@@ -6,7 +6,7 @@ import java.io.Serializable;
 
 //once client recieves that change the GUI to how we actually play the game.
 
-public class Ships extends Grid implements Serializable
+public class Ship implements Serializable
 {//open class
 
    //here are the attributes of our ship class
@@ -16,7 +16,7 @@ public class Ships extends Grid implements Serializable
    private int startY; //the vertical startpoint of the ship
    private boolean orientation; //whether or not the ship is vertical or horizontal
    
-   public Ships(String _name, int _arrayLength, int _x, int _y, boolean _orientation)
+   public Ship(String _name, int _arrayLength, int _x, int _y, boolean _orientation)
    {//open constructor
    
       //Array, two ints, orientation
@@ -57,16 +57,16 @@ public class Ships extends Grid implements Serializable
    //method for acquiring getting the coordinates the
    //ship occupies. The server can call this for the 
    //ship objects the client sends it
-   public Grid.Coordinate[] getCoordinates() {
-      Coordinate[] coords = new Coordinate[arrayLength];
+   public String[] getCoordinates() {
+      String[] coords = new String[arrayLength];
       if(orientation) {
          for(int i = 0; i < arrayLength; i++) {
-            coords[i] = getCoords(startX, startY + i);
+            coords[i] = startX + ", " + (startY + i);
          }
       }
       else {
          for(int i = 0; i < arrayLength; i++) {
-            coords[i] = getCoords(startX + i, startY);
+            coords[i] = (startX + i) + ", " + startY;
          }
       }
       return coords;
