@@ -1,3 +1,7 @@
+import java.util.*;
+import java.net.*;
+import java.io.*;
+
 //SERVER
 
 //SERVER RECIEVES ARRAY OF SHIPS
@@ -16,14 +20,15 @@
 
 //wait for turns, after they hit the ready (Message back from server confirmation that the game is starting/grid was valid)
 
-
-
 public class BattleshipServer
 {//open class
    Boolean Win_Condition = false;
-   Grid player1;
-   Grid player2;
+   BattleshipClient player1;
+   BattleshipClient player2;
    Boolean[][] PlayField = new Boolean[10][10];
+   ServerSocket ss;
+   Socket cs;
+
    //may need to take in Player1 and Player2??
    BattleshipServer(/* Maybe take an Array of Coordinates for the ships? or an Array of Ships if ships implemented properly*/)
    {//open constructor
@@ -32,7 +37,19 @@ public class BattleshipServer
       //This will deal with hit-handling, saving grids, HP, running the game
       //method for running game (Do-While)
       
-      
+      try
+      {//open try
+         ss = new ServerSocket(16789);
+         while(true)
+         {//open while
+            cs = ss.accept();
+            System.out.println("Connected");
+         }//close while
+      }//close try
+      catch(IOException ioe)
+      {//open catch
+         ioe.printStackTrace();
+      }//close catch
    }//close constructor
    
    //If we don't thread it we can just use Player1.getHP() / Player2.getHP(), whichever player's current turn is going
@@ -42,5 +59,8 @@ public class BattleshipServer
    //    Win_Condition = true;
    //else
    //    
-   
+   public static void main(String[] args)
+   {//open main
+      new BattleshipServer();
+   }//close main
 }//close class
