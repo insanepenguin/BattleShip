@@ -31,7 +31,8 @@ public class BattleshipServer
    
    ServerSocket ss;
    Socket cs;
-   ObjectInputStream ois;                    //declare globally!
+   ObjectInputStream ois;                  //declare globally!
+   ObjectOutputStream oos;
    Ship[] shipsReadIn;
    
    private JFrame jfServerFrame = new JFrame();
@@ -62,29 +63,28 @@ public class BattleshipServer
       
       try
       {//open try
-         jtaDiagnostics.setText("Server has launched!");
+         jtaDiagnostics.setText("Server launched @" + InetAddress.getLocalHost().getHostAddress());
          ss = new ServerSocket(16789);
-         while(true)
-         {//open while
+         for(int i = 0; i < 2; i++)
+         {//open for loop
             cs = ss.accept();
-            jtaDiagnostics.setText(jtaDiagnostics.getText() + "\nSomeone Connected!");       //update text area saying someone connected
+            console("Player " + (i + 1) + " Connected @" + cs.getInetAddress());       //update text area saying someone connected
             try
             {//open try
                ois = new ObjectInputStream(cs.getInputStream());                             //instantiate locally!
-               String test = new String();
                Object incoming = ois.readObject();
                if(incoming instanceof Ship[])                     //compare if what came in is an instance of an array of the Ship class
                {//open if                                           if it is, make our Ship array equal to the incoming object casted as a ship array
                shipsReadIn = (Ship[])incoming;                    //and print it out to the text area using the toString method in a for loop
-                  for(int i = 0; i < shipsReadIn.length; i++)     //FALSE for Orientation = HORIZONTAL, TRUE for Orientation = Vertical
+                  for(int j = 0; j < shipsReadIn.length; j++)     //FALSE for Orientation = HORIZONTAL, TRUE for Orientation = Vertical
                   {//open for loop
-                     test =  shipsReadIn[i].toString();
-                     jtaDiagnostics.setText(jtaDiagnostics.getText() + "\n" + test);
+                     String shipString =  shipsReadIn[j].toString();
+                     console(shipString);
                   }//close for loop
                }//close if
                else
                {//open else                             if it isn't, print an error message to the text area
-                  jtaDiagnostics.setText(jtaDiagnostics.getText() + "\n" + "ERROR! OBJECT READ IN WASN'T A SHIP!");
+                  console("ERROR! OBJECT READ IN WASN'T A SHIP!");
                }//close else
             }//close try
             catch(IOException ioe)
@@ -95,13 +95,20 @@ public class BattleshipServer
             {//open 2nd catch
                cnfe.printStackTrace();
             }//close 2nd catch
-         }//close while
+         }//close for loop
       }//close try
       catch(IOException ioe)
       {//open catch
          ioe.printStackTrace();
       }//close catch
+      console("Both players connected, starting game");
    }//close constructor
+   
+   //a method so we don't have to be like "jtaDiagnostics.setText(jtaDiagnostics.getText() + '\n' + w/e) every time lol
+   public void console(String msg) 
+   {//open console updating method
+      jtaDiagnostics.setText(jtaDiagnostics.getText() + '\n' + msg);
+   }//close console updating method
    
    //If we don't thread it we can just use Player1.getHP() / Player2.getHP(), whichever player's current turn is going
    // if we thread it, we should be able to do Player.getHP() regardless.
