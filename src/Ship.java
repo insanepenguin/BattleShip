@@ -71,4 +71,8 @@ public class Ship implements Serializable
       }
       return coords;
    }
+   
+   public String toString() {
+      return String.format("%s, %d, %d, %d, %b", getName(), getArrayLength(), getStartX(), getStartY(), getOrientation());
+   }
 }//close class
