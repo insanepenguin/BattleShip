@@ -38,41 +38,56 @@ public class Ship implements Serializable
    //I've elected not to include setters, as we'll
    //pass it everything it needs on instantiation
    //and none of the attributes are going to change
-   public String getName() {
+   public String getName() 
+   {//open getName method
       return name;
-   }
-   public int getArrayLength() {
+   }//close getName method
+   
+   public int getArrayLength() 
+   {//open getArrayLength method
       return arrayLength;
-   }
-   public int getStartX() {
+   }//close getArrayLength method
+   
+   public int getStartX()
+   {//open getStartX method
       return startX;
-   }
-   public int getStartY() {
+   }//close getStartX method
+   
+   public int getStartY() 
+   {//open getStartY method
       return startY;
-   }
-   public boolean getOrientation() {
+   }//close getStartY method
+   
+   public boolean getOrientation() 
+   {//open getOrientation method
       return orientation;
-   }
+   }//close getOrientation method
+   
+   public String toString() 
+   {//open toString method
+      return String.format("%s, %d, %d, %d, %b", getName(), getArrayLength(), getStartX(), getStartY(), getOrientation());
+   }//close toString method
    
    //method for acquiring getting the coordinates the
    //ship occupies. The server can call this for the 
    //ship objects the client sends it
-   public String[] getCoordinates() {
+   public String[] getCoordinates() 
+   {//open getCoordinates method
       String[] coords = new String[arrayLength];
-      if(orientation) {
-         for(int i = 0; i < arrayLength; i++) {
+      if(orientation) 
+      {//open if
+         for(int i = 0; i < arrayLength; i++) 
+         {//open for loop
             coords[i] = startX + ", " + (startY + i);
-         }
-      }
-      else {
-         for(int i = 0; i < arrayLength; i++) {
+         }//close foor loop
+      }//close if
+      else 
+      {//open else
+         for(int i = 0; i < arrayLength; i++) 
+         {//open for loop
             coords[i] = (startX + i) + ", " + startY;
-         }
-      }
+         }//close for loop
+      }//close else
       return coords;
-   }
-   
-   public String toString() {
-      return String.format("%s, %d, %d, %d, %b", getName(), getArrayLength(), getStartX(), getStartY(), getOrientation());
-   }
+   }//close getCoordinates method
 }//close class
