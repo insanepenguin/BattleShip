@@ -1,7 +1,9 @@
 import java.util.*;
 import java.net.*;
 import java.io.*;
-
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
 //SERVER
 
 //SERVER RECIEVES ARRAY OF SHIPS
@@ -26,8 +28,19 @@ public class BattleshipServer
    BattleshipClient player1;
    BattleshipClient player2;
    Boolean[][] PlayField = new Boolean[10][10];
+   
    ServerSocket ss;
    Socket cs;
+   ObjectInputStream ois;                    //declare globally!
+   Ship[] shipsReadIn;
+   
+   private JFrame jfServerFrame = new JFrame();
+   private JTextArea jtaDiagnostics = new JTextArea(20,35);
+   private JScrollPane jspScroller = new JScrollPane(jtaDiagnostics, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+   private JScrollBar ScrollBar = jspScroller.getVerticalScrollBar();
+   private JPanel jpCenter = new JPanel();
+
+   
 
    //may need to take in Player1 and Player2??
    BattleshipServer(/* Maybe take an Array of Coordinates for the ships? or an Array of Ships if ships implemented properly*/)
@@ -36,14 +49,52 @@ public class BattleshipServer
       //This should build a new version of the Grid from Grid, for each player!
       //This will deal with hit-handling, saving grids, HP, running the game
       //method for running game (Do-While)
+      jfServerFrame.setLayout(new BorderLayout(5,10));
+      jtaDiagnostics.setEnabled(false);
+      jpCenter.add(jspScroller);
+      jfServerFrame.add(jpCenter, BorderLayout.CENTER);
+      
+      jfServerFrame.setTitle("Battleship Server");
+      jfServerFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+      jfServerFrame.setLocationRelativeTo(null);
+      jfServerFrame.pack();
+      jfServerFrame.setVisible(true);
       
       try
       {//open try
+         jtaDiagnostics.setText("Server has launched!");
          ss = new ServerSocket(16789);
          while(true)
          {//open while
             cs = ss.accept();
-            System.out.println("Connected");
+            jtaDiagnostics.setText(jtaDiagnostics.getText() + "\nSomeone Connected!");       //update text area saying someone connected
+            try
+            {//open try
+               ois = new ObjectInputStream(cs.getInputStream());                             //instantiate locally!
+               String test = new String();
+               Object incoming = ois.readObject();
+               if(incoming instanceof Ship[])                     //compare if what came in is an instance of an array of the Ship class
+               {//open if                                           if it is, make our Ship array equal to the incoming object casted as a ship array
+               shipsReadIn = (Ship[])incoming;                    //and print it out to the text area using the toString method in a for loop
+                  for(int i = 0; i < shipsReadIn.length; i++)     //FALSE for Orientation = HORIZONTAL, TRUE for Orientation = Vertical
+                  {//open for loop
+                     test =  shipsReadIn[i].toString();
+                     jtaDiagnostics.setText(jtaDiagnostics.getText() + "\n" + test);
+                  }//close for loop
+               }//close if
+               else
+               {//open else                             if it isn't, print an error message to the text area
+                  jtaDiagnostics.setText(jtaDiagnostics.getText() + "\n" + "ERROR! OBJECT READ IN WASN'T A SHIP!");
+               }//close else
+            }//close try
+            catch(IOException ioe)
+            {//open catch
+               ioe.printStackTrace();
+            }//close catch
+            catch(ClassNotFoundException cnfe)
+            {//open 2nd catch
+               cnfe.printStackTrace();
+            }//close 2nd catch
          }//close while
       }//close try
       catch(IOException ioe)
