@@ -27,7 +27,8 @@ public class BattleshipServer
    Boolean Win_Condition = false;
    BattleshipClient player1;
    BattleshipClient player2;
-   Boolean[][] PlayField = new Boolean[10][10];
+   Boolean[][] Player1Field = new Boolean[10][10];
+   Boolean[][] Player2Field = new Boolean[10][10];
    
    ServerSocket ss;
    Socket cs;
@@ -39,23 +40,32 @@ public class BattleshipServer
    private JTextArea jtaDiagnostics = new JTextArea(20,35);
    private JScrollPane jspScroller = new JScrollPane(jtaDiagnostics, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
    private JScrollBar ScrollBar = jspScroller.getVerticalScrollBar();
-   private JPanel jpCenter = new JPanel();
-
-   
+   private JPanel jpCenter = new JPanel(); 
 
    //may need to take in Player1 and Player2??
    BattleshipServer(/* Maybe take an Array of Coordinates for the ships? or an Array of Ships if ships implemented properly*/)
    {//open constructor
-   
+          
       //This should build a new version of the Grid from Grid, for each player!
       //This will deal with hit-handling, saving grids, HP, running the game
       //method for running game (Do-While)
+   
+      //SET THE BOOLEAN FIELDS TO FALSE FOR BOTH PLAY FIELDS!
+      for(int y = 0; y < 10; y++)
+      {//open 1st for
+         for(int z = 0; z < 10; z++)
+         {//close 2nd for
+            Player1Field[y][z] = false;
+            Player2Field[y][z] = false;
+         }//close 2nd for
+      }//close 1st for           
+
       jfServerFrame.setLayout(new BorderLayout(5,10));
       jtaDiagnostics.setEnabled(false);
       jpCenter.add(jspScroller);
       jfServerFrame.add(jpCenter, BorderLayout.CENTER);
       
-      jfServerFrame.setTitle("Battleship Server");
+      jfServerFrame.setTitle("Battleship Server by JavaPack Survivors");
       jfServerFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
       jfServerFrame.setLocationRelativeTo(null);
       jfServerFrame.pack();
@@ -71,7 +81,7 @@ public class BattleshipServer
             console("Player " + (i + 1) + " Connected @" + cs.getInetAddress());       //update text area saying someone connected
             try
             {//open try
-               ois = new ObjectInputStream(cs.getInputStream());                             //instantiate locally!
+               ois = new ObjectInputStream(cs.getInputStream());                       //instantiate locally!
                Object incoming = ois.readObject();
                if(incoming instanceof Ship[])                     //compare if what came in is an instance of an array of the Ship class
                {//open if                                           if it is, make our Ship array equal to the incoming object casted as a ship array
@@ -80,10 +90,26 @@ public class BattleshipServer
                   {//open for loop
                      String shipString =  shipsReadIn[j].toString();
                      console(shipString);
+                     
+                     //this is setting the boolean values of the grids to true for the ships placement!
+                     if(shipsReadIn[j].getOrientation() == false)
+                     {//open if
+                        for(int a = 0; a < shipsReadIn[j].getArrayLength(); a++)
+                        {//open for
+                           Player1Field[(shipsReadIn[j].getStartX()) + a][shipsReadIn[j].getStartY()] = true;
+                        }//close for
+                     }//close if
+                     else
+                     {//open if
+                        for(int b = 0; b < shipsReadIn[j].getArrayLength(); b++)
+                        {//open for
+                           Player1Field[(shipsReadIn[j].getStartX())][shipsReadIn[j].getStartY() + b] = true;
+                        }//close for
+                     }//close if
                   }//close for loop
                }//close if
                else
-               {//open else                             if it isn't, print an error message to the text area
+               {//open else                                         if it isn't, print an error message to the text area
                   console("ERROR! OBJECT READ IN WASN'T A SHIP!");
                }//close else
             }//close try
