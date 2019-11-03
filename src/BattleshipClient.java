@@ -27,6 +27,7 @@ public class BattleshipClient extends JFrame implements ActionListener {
    //which ship the player is placing down, if they aren't in the placing phase it's null
    private Coordinate[] selected;
    private Ship[] ships = new Ship[5];
+   private Ship toShoot;
    
    //the grid has a collection of coordinates, they're referred to by their position in this array
    private Coordinate[][] coordinates = new Coordinate[10][10];
@@ -37,7 +38,7 @@ public class BattleshipClient extends JFrame implements ActionListener {
    private Coordinate[] destroyer = new Coordinate[3];
    private Coordinate[] submarine = new Coordinate[3];
    private Coordinate[] patrolBoat = new Coordinate[2];
-   private Coordinate[] fire = new Coordinate[1];
+   private Coordinate[] target = new Coordinate[1];
    
    //these are the gui components that need to be declared globally
    private JPanel jpShips = new JPanel(new GridLayout(0,1));
@@ -49,10 +50,12 @@ public class BattleshipClient extends JFrame implements ActionListener {
    private JButton jbPatrolBoat = new JButton("Patrol Boat");
    private JButton jbRotate = new JButton("Rotate");
    private JButton jbReady = new JButton("READY");
+   private JButton jbTarget = new JButton("Target");
    private JButton jbFire = new JButton("Fire");
    
    //what direction you want to place the ship in
    boolean rotate = false;
+   boolean shoot = false;
       
    //setting up the grid!
    public BattleshipClient() {
@@ -101,6 +104,8 @@ public class BattleshipClient extends JFrame implements ActionListener {
       jbPatrolBoat.addActionListener(this);
       jbRotate.addActionListener(this);
       jbReady.addActionListener(this);
+      jbTarget.addActionListener(this);
+      jbFire.addActionListener(this);
       jbReady.setEnabled(false);
       jpShips.add(jbCarrier);
       jpShips.add(jbCruiser);
@@ -110,6 +115,7 @@ public class BattleshipClient extends JFrame implements ActionListener {
       jpShips.add(jbRotate);
       jpShips.add(jbReady);
       jpFireControl.add(new JLabel("Fire controls or chat? idk")); //this is just a placeholder lol
+      jpFireControl.add(jbTarget);
       jpFireControl.add(jbFire);
       jpShips.setPreferredSize(new Dimension(200, 500));
       jpFireControl.setPreferredSize(new Dimension(200, 500));
@@ -199,9 +205,9 @@ public class BattleshipClient extends JFrame implements ActionListener {
                      clear(patrolBoat);
                      place(patrolBoat);
                   }
-                  else if(selected == fire){
-                     clear(fire);
-                     place(fire);
+                  else if(selected == target){
+                     clear(target);
+                     place(target);
                   }
                }
                catch(ArrayIndexOutOfBoundsException aioobe) {
@@ -301,6 +307,8 @@ public class BattleshipClient extends JFrame implements ActionListener {
          pout = new PrintWriter(new OutputStreamWriter(s.getOutputStream()));
          oos = new ObjectOutputStream(s.getOutputStream());
          oos.writeObject(ships);
+         if(shoot)
+            oos.writeObject(toShoot);
       }//close try
       catch(IOException ioe)
       {//open 1st catch
@@ -325,7 +333,7 @@ public class BattleshipClient extends JFrame implements ActionListener {
          if (rotate == true) rotate = false;
          else rotate = true;
       }
-      else if(pressedButton == jbFire) selected = fire;
+      else if(pressedButton == jbTarget) selected = target;
       else if(pressedButton == jbReady){
          selected = null;
          jpFireControl.setVisible(true);
@@ -337,6 +345,10 @@ public class BattleshipClient extends JFrame implements ActionListener {
          ships[3] = new Ship("Submarine", 3, submarine[0].x, submarine[0].y, submarine[0].placedOrientation);
          ships[4] = new Ship("Patrol Boat", 2, patrolBoat[0].x, patrolBoat[0].y, patrolBoat[0].placedOrientation);
          playing();
+      }
+      else if(pressedButton == jbFire){
+         toShoot = new Ship("Target", 1, target[0].x, target[0].y, target[0].placedOrientation);
+         shoot = true;
       }
    }
    
