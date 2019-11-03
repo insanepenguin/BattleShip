@@ -308,7 +308,10 @@ public class BattleshipClient extends JFrame implements ActionListener {
          oos = new ObjectOutputStream(s.getOutputStream());
          oos.writeObject(ships);
          if(shoot)
+         {//open if
             oos.writeObject(toShoot);
+            shoot = false;
+         }//close if
       }//close try
       catch(IOException ioe)
       {//open 1st catch
