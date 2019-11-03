@@ -37,6 +37,7 @@ public class BattleshipClient extends JFrame implements ActionListener {
    private Coordinate[] destroyer = new Coordinate[3];
    private Coordinate[] submarine = new Coordinate[3];
    private Coordinate[] patrolBoat = new Coordinate[2];
+   private Coordinate[] fire = new Coordinate[1];
    
    //these are the gui components that need to be declared globally
    private JPanel jpShips = new JPanel(new GridLayout(0,1));
@@ -48,6 +49,7 @@ public class BattleshipClient extends JFrame implements ActionListener {
    private JButton jbPatrolBoat = new JButton("Patrol Boat");
    private JButton jbRotate = new JButton("Rotate");
    private JButton jbReady = new JButton("READY");
+   private JButton jbFire = new JButton("Fire");
    
    //what direction you want to place the ship in
    boolean rotate = false;
@@ -108,6 +110,7 @@ public class BattleshipClient extends JFrame implements ActionListener {
       jpShips.add(jbRotate);
       jpShips.add(jbReady);
       jpFireControl.add(new JLabel("Fire controls or chat? idk")); //this is just a placeholder lol
+      jpFireControl.add(jbFire);
       jpShips.setPreferredSize(new Dimension(200, 500));
       jpFireControl.setPreferredSize(new Dimension(200, 500));
       jpFireControl.setVisible(false);
@@ -117,7 +120,7 @@ public class BattleshipClient extends JFrame implements ActionListener {
       add(jpEast, BorderLayout.EAST);
       
       //final setup for the GUI
-      setTitle("Grid Thingy by Ben");
+      setTitle("Battleship Client by JavaPack Survivors!");
       pack();
       setLocationRelativeTo(null);
       setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -195,6 +198,10 @@ public class BattleshipClient extends JFrame implements ActionListener {
                   else if(selected == patrolBoat) {
                      clear(patrolBoat);
                      place(patrolBoat);
+                  }
+                  else if(selected == fire){
+                     clear(fire);
+                     place(fire);
                   }
                }
                catch(ArrayIndexOutOfBoundsException aioobe) {
@@ -296,9 +303,9 @@ public class BattleshipClient extends JFrame implements ActionListener {
          oos.writeObject(ships);
       }//close try
       catch(IOException ioe)
-      {//open catch
+      {//open 1st catch
          ioe.printStackTrace();
-      }//close catch
+      }//close 2nd catch
    }//close playing method
    
    //getter for coordinates, not sure if we'll need but w/e
@@ -318,6 +325,7 @@ public class BattleshipClient extends JFrame implements ActionListener {
          if (rotate == true) rotate = false;
          else rotate = true;
       }
+      else if(pressedButton == jbFire) selected = fire;
       else if(pressedButton == jbReady){
          selected = null;
          jpFireControl.setVisible(true);
