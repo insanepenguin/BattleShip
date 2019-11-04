@@ -25,7 +25,7 @@ import java.awt.event.*;
 public class BattleshipServer
 {//open class
    Boolean Win_Condition = false;
-   BattleshipClient player1;
+   BattleshipClient player1;//Y dose this exist?
    BattleshipClient player2;
    Boolean[][] Player1Field = new Boolean[10][10];
    Boolean[][] Player2Field = new Boolean[10][10];
@@ -128,6 +128,8 @@ public class BattleshipServer
          ioe.printStackTrace();
       }//close catch
       console("Both players connected, starting game");
+      //TODO:Add player instantiations and start the game
+
    }//close constructor
    
    //a method so we don't have to be like "jtaDiagnostics.setText(jtaDiagnostics.getText() + '\n' + w/e) every time lol
@@ -142,7 +144,9 @@ public class BattleshipServer
    //if Player.getHP() == 0
    //    Win_Condition = true;
    //else
-   //    
+   public void Game(Player p1,Player p2){
+         //TODO: Wait for both players to pass in cords and then play the turn
+   }
    public static void main(String[] args)
    {//open main
       new BattleshipServer();
