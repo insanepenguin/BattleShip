@@ -4,10 +4,12 @@ public class Player {
     boolean winner = false;
     int hp = 0;
     boolean[][] grid = new boolean[10][10];
-    public void Player(boolean[][] _grid){
-        grid = _grid;
 
+    public Player(boolean[][] _grid, int _hp) {
+        grid = _grid;
+        hp = _hp;
     }
+
     public int turn(String x,int y){
         if(hit(Integer.parseInt(x),y)){
             hp--;

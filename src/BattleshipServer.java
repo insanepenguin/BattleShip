@@ -24,9 +24,9 @@ import java.awt.event.*;
 
 public class BattleshipServer
 {//open class
-   Boolean Win_Condition = false;
-   BattleshipClient player1;//Y dose this exist?
-   BattleshipClient player2;
+   boolean Win_Condition = false;
+   Player player1;
+   Player player2;
    boolean[][] Player1Field = new boolean[10][10];
    boolean[][] Player2Field = new boolean[10][10];
    
@@ -70,9 +70,8 @@ public class BattleshipServer
       jfServerFrame.setLocationRelativeTo(null);
       jfServerFrame.pack();
       jfServerFrame.setVisible(true);
-      
-      try
-      {//open try
+
+      try{//Making X*X logic grid
          jtaDiagnostics.setText("Server launched @" + InetAddress.getLocalHost().getHostAddress());
          ss = new ServerSocket(16789);
          for(int i = 0; i < 2; i++)
@@ -128,8 +127,24 @@ public class BattleshipServer
          ioe.printStackTrace();
       }//close catch
       console("Both players connected, starting game");
+      int StartingHP = 0;
+      for(boolean[] x : Player1Field){
+         for (boolean y : x){
+            if(y){
+               StartingHP++;
+            }
+         }
+      }
       //TODO:Add player instantiations and start the game
+      player1 = new Player(Player1Field,StartingHP);
+      player2 = new Player(Player2Field,StartingHP);
+      while(Win_Condition){
+         int p1T= player1.turn(0,0);
+         int p2T= player1.turn(0,0);
 
+         //TODO:Switch for what happen in a separate method
+
+      }
    }//close constructor
    
    //a method so we don't have to be like "jtaDiagnostics.setText(jtaDiagnostics.getText() + '\n' + w/e) every time lol
