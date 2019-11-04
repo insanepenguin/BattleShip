@@ -31,6 +31,7 @@ public class BattleshipClient extends JFrame implements ActionListener {
    
    //the grid has a collection of coordinates, they're referred to by their position in this array
    private Coordinate[][] coordinates = new Coordinate[10][10];
+   private Coordinate[][] enemyCoords = new Coordinate[10][10];
    
    //the ships are just arrays of coordinates. I know we wanted a ship class but this just feels easier
    private Coordinate[] carrier = new Coordinate[5];
@@ -41,8 +42,9 @@ public class BattleshipClient extends JFrame implements ActionListener {
    private Coordinate[] target = new Coordinate[1];
    
    //these are the gui components that need to be declared globally
-   private JPanel jpShips = new JPanel(new GridLayout(0,1));
-   private JPanel jpFireControl = new JPanel(new GridLayout(0,1));
+   private JPanel jpShips = new JPanel(new GridLayout(1,0));
+   private JPanel jpFireControl = new JPanel(new GridLayout(1,0));
+   private JPanel jpEnemyGrid;
    private JButton jbCarrier = new JButton("Carrier");
    private JButton jbCruiser = new JButton("Cruiser");
    private JButton jbDestroyer = new JButton("Destroyer");
@@ -91,10 +93,21 @@ public class BattleshipClient extends JFrame implements ActionListener {
       for(int y = 0; y < 10; y++) {
          for(int x = 0; x < 10; x++) {
             coordinates[x][y] = new Coordinate(x, y);
+            coordinates[x][y].active = true;
             jpGrid.add(coordinates[x][y]);
          }
       }
-      add(jpGrid, BorderLayout.CENTER);
+      add(jpGrid, BorderLayout.WEST);
+      
+      jpEnemyGrid = new JPanel(new GridLayout(0,10));
+      for(int y = 0; y < 10; y++) {
+         for(int x = 0; x < 10; x++) {
+            enemyCoords[x][y] = new Coordinate(x, y);
+            jpEnemyGrid.add(enemyCoords[x][y]);
+         }
+      }
+      add(jpEnemyGrid, BorderLayout.EAST);
+      jpEnemyGrid.setVisible(false);
       
       //this is just taking care of GUI assembly, button setup component add etc.
       jbCarrier.addActionListener(this);
@@ -117,17 +130,17 @@ public class BattleshipClient extends JFrame implements ActionListener {
       jpFireControl.add(new JLabel("Fire controls or chat? idk")); //this is just a placeholder lol
       jpFireControl.add(jbTarget);
       jpFireControl.add(jbFire);
-      jpShips.setPreferredSize(new Dimension(200, 500));
-      jpFireControl.setPreferredSize(new Dimension(200, 500));
+      //jpShips.setPreferredSize(new Dimension(200, 500));
+      //jpFireControl.setPreferredSize(new Dimension(200, 500));
       jpFireControl.setVisible(false);
-      JPanel jpEast = new JPanel();
-      jpEast.add(jpFireControl);
-      jpEast.add(jpShips);
-      add(jpEast, BorderLayout.EAST);
+      JPanel jpSouth = new JPanel();
+      jpSouth.add(jpFireControl);
+      jpSouth.add(jpShips);
+      add(jpSouth, BorderLayout.SOUTH);
       
       //final setup for the GUI
       setTitle("Battleship Client by JavaPack Survivors!");
-      pack();
+      setSize(1050,1000);
       setLocationRelativeTo(null);
       setDefaultCloseOperation(EXIT_ON_CLOSE);
       setVisible(true);
@@ -141,7 +154,7 @@ public class BattleshipClient extends JFrame implements ActionListener {
       
       //at the start the coordinates aren't occupied or shot
       boolean occupied = false;
-      boolean shot = false;
+      boolean active = false;
       boolean placedOrientation;
       
       //setting up each coordinate! 
@@ -171,7 +184,8 @@ public class BattleshipClient extends JFrame implements ActionListener {
             //it puts the colors back to their normal (non hovering) state. 
             public void mouseExited(MouseEvent me) {
                try {
-                  shade(Color.GRAY, Color.BLUE);
+
+                     shade(Color.GRAY, Color.BLUE);
                }
                catch(ArrayIndexOutOfBoundsException aioobe) {}
             }
@@ -180,34 +194,40 @@ public class BattleshipClient extends JFrame implements ActionListener {
             //if it can't place, it throws an exception which is handled
             public void mousePressed(MouseEvent me) {
                try {
-                  check();
+               
                   //if it managed to get this far without throwing an exception, time to place the ship!
                   //it checks what ship we're placing, then deletes any old one and places a new one
                   //this is so that you can't have a fleet of like 5 aircraft carriers or smth
                   //we can add more ships at any time just lmk, I only did 4 cus I think one is the same size?
-                  if(selected == carrier) {
+               
+                  if(selected == target){
+                     clear(target);
+                     place(target);
+                  }
+                  else if(selected == carrier) {
+                     check();
                      clear(carrier);
                      place(carrier);
                   }
                   else if(selected == cruiser) {
+                     check();
                      clear(cruiser);
                      place(cruiser);
                   }
                   else if(selected == destroyer) {
+                     check();
                      clear(destroyer);
                      place(destroyer);
                   }
                   else if(selected == submarine) {
+                     check();
                      clear(submarine);
                      place(submarine);
                   }
                   else if(selected == patrolBoat) {
+                     check();
                      clear(patrolBoat);
                      place(patrolBoat);
-                  }
-                  else if(selected == target){
-                     clear(target);
-                     place(target);
                   }
                }
                catch(ArrayIndexOutOfBoundsException aioobe) {
@@ -224,28 +244,41 @@ public class BattleshipClient extends JFrame implements ActionListener {
       //method to place a ship down
       //@param Coordinatep[] coord, the ship being placed
       public void place(Coordinate[] coord) {
-         //do this for the length of the ship, so like carrier 5 cruiser 4 etc
-         for(int i = 0; i < coord.length; i++) {
-            //check horizontal/vertical placement
-            if(rotate) {
-               //add the coordinate to the ship array
-               coord[i] = coordinates[x][y + i];
+      
+      /*
+      if(coord.length == 1){
+         enemyCoords[coord[0].x][coord[0].y].setBackground(Color.RED);
+      }//close if
+      else{*/
+            //do this for the length of the ship, so like carrier 5 cruiser 4 etc
+            for(int i = 0; i < coord.length; i++) {
+               //check horizontal/vertical placement
+               if(coord.length ==1){
+                  coord[i]=enemyCoords[x][y];
+               }
+               else if(rotate) {
+                  //add the coordinate to the ship array
+                  coord[i] = coordinates[x][y + i];
+               }
+               else {
+                  coord[i] = coordinates[x + i][y];
+               }
+               //visually show that the coordinate is occupied by a ship or targetted to fire
+               if(coord.length == 1)
+                  coord[i].setBackground(Color.RED);
+               else
+                  coord[i].setBackground(Color.GRAY);
+                  
+               //set that coordinate as occupied by a ship
+               coord[i].occupied = true;
+               coord[i].placedOrientation = rotate;      //LEFT TO RIGHT is FALSE, TOP TO BOTTOM is TRUE
             }
-            else {
-               coord[i] = coordinates[x + i][y];
-            }
-            //visually show that the coordinate is occupied by a ship
-            coord[i].setBackground(Color.GRAY);
-            //set that coordinate as occupied by a ship
-            coord[i].occupied = true;
-            coord[i].placedOrientation = rotate;      //LEFT TO RIGHT is FALSE, TOP TO BOTTOM is TRUE
-
-         }
-      }
+         //}//close else
+      }//close place method
       
       //method that colors the coordinates when you're hovering on them
       public void shade(Color occ, Color vac) {
-         if(selected != null) {
+         if((selected != null)&&(selected != target)) {
             for(int i = 0; i < selected.length; i++) {
                if(rotate) {
                   if(coordinates[x][y + i].occupied) coordinates[x][y + i].setBackground(occ);
@@ -257,6 +290,11 @@ public class BattleshipClient extends JFrame implements ActionListener {
                }
             }
          }
+         else if(selected == target){
+         
+            enemyCoords[x][y].setBackground(vac);
+
+         }//close else if
       }
       
       //checking to make sure the ship doesn't overlap with others (it's okay to overlap with itself)
@@ -286,16 +324,24 @@ public class BattleshipClient extends JFrame implements ActionListener {
       public void clear(Coordinate[] coord) {
          if(coord[0] != null) {
             for(int i = 0; i < coord.length; i++) {
-               coord[i].setBackground(Color.BLUE);
-               coord[i].occupied = false;
-               coord[i] = null;
+               if(coord.length == 1)
+               {
+                  coord[i].setBackground(Color.RED);
+                  coord[i].occupied = false;
+                  coord[i] = null;
+               }
+               else{
+                  coord[i].setBackground(Color.BLUE);
+                  coord[i].occupied = false;
+                  coord[i] = null;
+               }
             }
          }
       }
          
       //toString for each coordinate, just for our testing purposes, no use in game
       public String toString() {
-         return "Coordinate (" + x + ", " + y + ") - Occupied: " + occupied + ", Shot: " + shot;
+         return "Coordinate (" + x + ", " + y + ") - Occupied: " + occupied;
       }
    }//close Coordinate class
    
@@ -307,9 +353,11 @@ public class BattleshipClient extends JFrame implements ActionListener {
          pout = new PrintWriter(new OutputStreamWriter(s.getOutputStream()));
          oos = new ObjectOutputStream(s.getOutputStream());
          oos.writeObject(ships);
+         //TODO loop
+         //while(your turn)
          if(shoot)
          {//open if
-            oos.writeObject(toShoot);
+            oos.writeObject(toShoot); //send String instead of toShoot object/Ship
             shoot = false;
          }//close if
       }//close try
@@ -340,6 +388,7 @@ public class BattleshipClient extends JFrame implements ActionListener {
       else if(pressedButton == jbReady){
          selected = null;
          jpFireControl.setVisible(true);
+         jpEnemyGrid.setVisible(true);
          jpShips.setVisible(false);
          //MAKE SHIPS OF EACH AND SEND TO SERVER
          ships[0] = new Ship("Carrier", 5, carrier[0].x, carrier[0].y, carrier[0].placedOrientation);
