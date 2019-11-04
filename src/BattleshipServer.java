@@ -27,8 +27,8 @@ public class BattleshipServer
    Boolean Win_Condition = false;
    BattleshipClient player1;//Y dose this exist?
    BattleshipClient player2;
-   Boolean[][] Player1Field = new Boolean[10][10];
-   Boolean[][] Player2Field = new Boolean[10][10];
+   boolean[][] Player1Field = new boolean[10][10];
+   boolean[][] Player2Field = new boolean[10][10];
    
    ServerSocket ss;
    Socket cs;
