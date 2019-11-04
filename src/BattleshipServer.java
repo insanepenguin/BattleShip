@@ -27,8 +27,8 @@ public class BattleshipServer
    Boolean Win_Condition = false;
    BattleshipClient player1;
    BattleshipClient player2;
-   Boolean[][] Player1Field = new Boolean[10][10];
-   Boolean[][] Player2Field = new Boolean[10][10];
+   Boolean[][] player1Field = new Boolean[10][10];
+   Boolean[][] player2Field = new Boolean[10][10];
    
    ServerSocket ss;
    Socket cs;
@@ -55,8 +55,8 @@ public class BattleshipServer
       {//open 1st for
          for(int z = 0; z < 10; z++)
          {//close 2nd for
-            Player1Field[y][z] = false;
-            Player2Field[y][z] = false;
+            player1Field[y][z] = false;
+            player2Field[y][z] = false;
          }//close 2nd for
       }//close 1st for           
 
@@ -70,7 +70,7 @@ public class BattleshipServer
       jfServerFrame.setLocationRelativeTo(null);
       jfServerFrame.pack();
       jfServerFrame.setVisible(true);
-      
+      Thread[] playersReady = new Thread[2];
       try
       {//open try
          jtaDiagnostics.setText("Server launched @" + InetAddress.getLocalHost().getHostAddress());
@@ -78,56 +78,28 @@ public class BattleshipServer
          for(int i = 0; i < 2; i++)
          {//open for loop
             cs = ss.accept();
+            Reciever thread = new Reciever(cs, i);
+            playersReady[i] = thread;
+            thread.start();
             console("Player " + (i + 1) + " Connected @" + cs.getInetAddress());       //update text area saying someone connected
-            try
-            {//open try
-               ois = new ObjectInputStream(cs.getInputStream());                       //instantiate locally!
-               Object incoming = ois.readObject();
-               if(incoming instanceof Ship[])                     //compare if what came in is an instance of an array of the Ship class
-               {//open if                                           if it is, make our Ship array equal to the incoming object casted as a ship array
-               shipsReadIn = (Ship[])incoming;                    //and print it out to the text area using the toString method in a for loop
-                  for(int j = 0; j < shipsReadIn.length; j++)     //FALSE for Orientation = HORIZONTAL, TRUE for Orientation = Vertical
-                  {//open for loop
-                     String shipString =  shipsReadIn[j].toString();
-                     console(shipString);
-                     
-                     //this is setting the boolean values of the grids to true for the ships placement!
-                     if(shipsReadIn[j].getOrientation() == false)
-                     {//open if
-                        for(int a = 0; a < shipsReadIn[j].getArrayLength(); a++)
-                        {//open for
-                           Player1Field[(shipsReadIn[j].getStartX()) + a][shipsReadIn[j].getStartY()] = true;
-                        }//close for
-                     }//close if
-                     else
-                     {//open if
-                        for(int b = 0; b < shipsReadIn[j].getArrayLength(); b++)
-                        {//open for
-                           Player1Field[(shipsReadIn[j].getStartX())][shipsReadIn[j].getStartY() + b] = true;
-                        }//close for
-                     }//close if
-                  }//close for loop
-               }//close if
-               else
-               {//open else                                         if it isn't, print an error message to the text area
-                  console("ERROR! OBJECT READ IN WASN'T A SHIP!");
-               }//close else
-            }//close try
-            catch(IOException ioe)
-            {//open catch
-               ioe.printStackTrace();
-            }//close catch
-            catch(ClassNotFoundException cnfe)
-            {//open 2nd catch
-               cnfe.printStackTrace();
-            }//close 2nd catch
          }//close for loop
       }//close try
       catch(IOException ioe)
       {//open catch
          ioe.printStackTrace();
       }//close catch
-      console("Both players connected, starting game");
+      console("Both players connected"); 
+      
+      //waiting for the players to send their ships 
+      for(int i = 0; i < 2; i++) {
+         try {
+            playersReady[i].join();
+         }
+         catch(InterruptedException ie) {
+            ie.printStackTrace();
+         }
+      }
+      console("Ships recieved, starting game");
    }//close constructor
    
    //a method so we don't have to be like "jtaDiagnostics.setText(jtaDiagnostics.getText() + '\n' + w/e) every time lol
@@ -135,6 +107,71 @@ public class BattleshipServer
    {//open console updating method
       jtaDiagnostics.setText(jtaDiagnostics.getText() + '\n' + msg);
    }//close console updating method
+   
+   public class Reciever extends Thread {
+      Socket sock;
+      int player;
+      
+      public Reciever(Socket cs, int i) {
+         cs = sock;
+         player = i;
+      }
+      
+      public void run() {
+         try
+         {//open try
+            ois = new ObjectInputStream(cs.getInputStream());                       //instantiate locally!
+            Object incoming = ois.readObject();
+            if(incoming instanceof Ship[])                     //compare if what came in is an instance of an array of the Ship class
+            {//open if                                         if it is, make our Ship array equal to the incoming object casted as a ship array
+               shipsReadIn = (Ship[])incoming;                 //and print it out to the text area using the toString method in a for loop
+               for(int j = 0; j < shipsReadIn.length; j++) {   //FALSE for Orientation = HORIZONTAL, TRUE for Orientation = Vertical
+                  //this is setting the boolean values of the grids to true for the ships placement!
+                  for(int i = 0; i < shipsReadIn[j].getCoordinates().length; i++) {
+                     String[] assignable = shipsReadIn[j].getCoordinates()[i].split(", ");
+                     synchronized(Win_Condition) {
+                        if(player == 0) {
+                           player1Field[Integer.parseInt(assignable[0])][Integer.parseInt(assignable[1])] = true;
+                        }
+                        else {
+                           player2Field[Integer.parseInt(assignable[0])][Integer.parseInt(assignable[1])] = true;
+                        }
+                     }
+                  }//close second for loop
+               }//close first for loop
+               
+               //TEST SHIT HERE
+               System.out.println("PLAYER 1 GRID");
+               for(int y = 0; y < 10; y++) {
+                  for(int x = 0; x < 10; x++) {
+                     System.out.print(String.format("%6b",player1Field[x][y]));
+                  }
+                  System.out.print("\n");
+               }
+               System.out.println("\nPLAYER 2 GRID");
+               for(int y = 0; y < 10; y++) {
+                  for(int x = 0; x < 10; x++) {
+                     System.out.print(String.format("%6b",player2Field[x][y]));
+                  }
+                  System.out.print("\n");
+               }
+               System.out.println("\n\n\n");
+            }//close if
+            else
+            {//open else                                         if it isn't, print an error message to the text area
+               console("ERROR! OBJECT READ IN WASN'T A SHIP!");
+            }//close else
+         }//close try
+         catch(IOException ioe)
+         {//open catch
+            ioe.printStackTrace();
+         }//close catch
+         catch(ClassNotFoundException cnfe)
+         {//open 2nd catch
+            cnfe.printStackTrace();
+         }//close 2nd catch
+      }
+   }
    
    //If we don't thread it we can just use Player1.getHP() / Player2.getHP(), whichever player's current turn is going
    // if we thread it, we should be able to do Player.getHP() regardless.
