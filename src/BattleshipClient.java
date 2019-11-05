@@ -245,11 +245,6 @@ public class BattleshipClient extends JFrame implements ActionListener {
       //@param Coordinatep[] coord, the ship being placed
       public void place(Coordinate[] coord) {
       
-      /*
-      if(coord.length == 1){
-         enemyCoords[coord[0].x][coord[0].y].setBackground(Color.RED);
-      }//close if
-      else{*/
             //do this for the length of the ship, so like carrier 5 cruiser 4 etc
             for(int i = 0; i < coord.length; i++) {
                //check horizontal/vertical placement
@@ -264,10 +259,7 @@ public class BattleshipClient extends JFrame implements ActionListener {
                   coord[i] = coordinates[x + i][y];
                }
                //visually show that the coordinate is occupied by a ship or targetted to fire
-               if(coord.length == 1)
-                  coord[i].setBackground(Color.RED);
-               else
-                  coord[i].setBackground(Color.GRAY);
+               coord[i].setBackground(Color.GRAY);
                   
                //set that coordinate as occupied by a ship
                coord[i].occupied = true;
@@ -292,7 +284,10 @@ public class BattleshipClient extends JFrame implements ActionListener {
          }
          else if(selected == target){
          
-            enemyCoords[x][y].setBackground(vac);
+            if(enemyCoords[x][y].occupied)
+               enemyCoords[x][y].setBackground(occ);
+            else
+               enemyCoords[x][y].setBackground(vac);
 
          }//close else if
       }
@@ -322,22 +317,15 @@ public class BattleshipClient extends JFrame implements ActionListener {
       //clearing a ship from the board, for if you want to place it somewhere else
       //the placements of the ships aren't final until you hit the ready button
       public void clear(Coordinate[] coord) {
-         if(coord[0] != null) {
-            for(int i = 0; i < coord.length; i++) {
-               if(coord.length == 1)
-               {
-                  coord[i].setBackground(Color.RED);
-                  coord[i].occupied = false;
-                  coord[i] = null;
-               }
-               else{
-                  coord[i].setBackground(Color.BLUE);
-                  coord[i].occupied = false;
-                  coord[i] = null;
-               }
+      if(coord[0] != null) {
+         for(int i = 0; i < coord.length; i++) {
+               coord[i].setBackground(Color.BLUE);
+               coord[i].occupied = false;
+               coord[i] = null;
             }
          }
       }
+
          
       //toString for each coordinate, just for our testing purposes, no use in game
       public String toString() {
