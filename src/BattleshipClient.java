@@ -42,8 +42,10 @@ public class BattleshipClient extends JFrame implements ActionListener {
    private Coordinate[] target = new Coordinate[1];
    
    //these are the gui components that need to be declared globally
-   private JPanel jpShips = new JPanel(new GridLayout(1,0));
-   private JPanel jpFireControl = new JPanel(new GridLayout(1,0));
+   private JLabel jlPlayer = new JLabel("Click each ship and place them here!", SwingConstants.CENTER);
+   private JLabel jlEnemy = new JLabel("Enemy's grid; ignore this for now.", SwingConstants.CENTER);
+   private JPanel jpShips = new JPanel(new GridLayout(0, 1));
+   private JPanel jpFireControl = new JPanel(new GridLayout(0, 1));
    private JPanel jpEnemyGrid;
    private JButton jbCarrier = new JButton("Carrier");
    private JButton jbCruiser = new JButton("Cruiser");
@@ -97,7 +99,7 @@ public class BattleshipClient extends JFrame implements ActionListener {
             jpGrid.add(coordinates[x][y]);
          }
       }
-      add(jpGrid, BorderLayout.WEST);
+      
       
       jpEnemyGrid = new JPanel(new GridLayout(0,10));
       for(int y = 0; y < 10; y++) {
@@ -106,10 +108,19 @@ public class BattleshipClient extends JFrame implements ActionListener {
             jpEnemyGrid.add(enemyCoords[x][y]);
          }
       }
-      add(jpEnemyGrid, BorderLayout.EAST);
-      jpEnemyGrid.setVisible(false);
+
       
       //this is just taking care of GUI assembly, button setup component add etc.
+      JPanel jpEast = new JPanel();
+      jpEast.setPreferredSize(new Dimension(500, 550));
+      JPanel jpWest = new JPanel();
+      jpWest.setPreferredSize(new Dimension(500, 550));
+      jpWest.add(jlPlayer);
+      jpEast.add(jlEnemy);
+      jpWest.add(jpGrid);
+      jpEast.add(jpEnemyGrid);
+      add(jpWest, BorderLayout.WEST);
+      add(jpEast, BorderLayout.EAST);
       jbCarrier.addActionListener(this);
       jbCruiser.addActionListener(this);
       jbDestroyer.addActionListener(this);
@@ -130,17 +141,16 @@ public class BattleshipClient extends JFrame implements ActionListener {
       jpFireControl.add(new JLabel("Fire controls or chat? idk")); //this is just a placeholder lol
       jpFireControl.add(jbTarget);
       jpFireControl.add(jbFire);
-      //jpShips.setPreferredSize(new Dimension(200, 500));
-      //jpFireControl.setPreferredSize(new Dimension(200, 500));
+      JPanel jpCenter = new JPanel();
+      jpShips.setPreferredSize(new Dimension(200, 500));
       jpFireControl.setVisible(false);
-      JPanel jpSouth = new JPanel();
-      jpSouth.add(jpFireControl);
-      jpSouth.add(jpShips);
-      add(jpSouth, BorderLayout.SOUTH);
+      jpCenter.add(jpFireControl, BorderLayout.CENTER);
+      jpCenter.add(jpShips, BorderLayout.CENTER);
+      add(jpCenter, BorderLayout.CENTER);
       
       //final setup for the GUI
       setTitle("Battleship Client by JavaPack Survivors!");
-      setSize(1050,1000);
+      pack();
       setLocationRelativeTo(null);
       setDefaultCloseOperation(EXIT_ON_CLOSE);
       setVisible(true);
@@ -152,7 +162,7 @@ public class BattleshipClient extends JFrame implements ActionListener {
       int x;
       int y;
       
-      //at the start the coordinates aren't occupied or shot
+      //at the start the coordinates aren't occupied or active
       boolean occupied = false;
       boolean active = false;
       boolean placedOrientation;
@@ -175,68 +185,74 @@ public class BattleshipClient extends JFrame implements ActionListener {
             //hovering over the grid to place your ships down!
             //it's a bit chunky, I'd like to implement a better way to handle rotating
             public void mouseEntered(MouseEvent me) {
-               try {
-                  shade(Color.LIGHT_GRAY, Color.CYAN);
+               if(active) {
+                  try {
+                     shade(Color.LIGHT_GRAY, Color.CYAN);
+                  }
+                  catch(ArrayIndexOutOfBoundsException aioobe) {
+                  }
                }
-               catch(ArrayIndexOutOfBoundsException aioobe) {}
             }
             //this is basically the same as the first method, but in reverse
             //it puts the colors back to their normal (non hovering) state. 
             public void mouseExited(MouseEvent me) {
-               try {
-
-                     shade(Color.GRAY, Color.BLUE);
+               if(active) {
+                  try {
+                        shade(Color.GRAY, Color.BLUE);
+                  }
+                  catch(ArrayIndexOutOfBoundsException aioobe) {
+                  }
                }
-               catch(ArrayIndexOutOfBoundsException aioobe) {}
             }
-            
             //this is when you click to place the ship down on the grid
             //if it can't place, it throws an exception which is handled
             public void mousePressed(MouseEvent me) {
-               try {
-               
-                  //if it managed to get this far without throwing an exception, time to place the ship!
-                  //it checks what ship we're placing, then deletes any old one and places a new one
-                  //this is so that you can't have a fleet of like 5 aircraft carriers or smth
-                  //we can add more ships at any time just lmk, I only did 4 cus I think one is the same size?
-               
-                  if(selected == target){
-                     clear(target);
-                     place(target);
+               if(active) {
+                  try {
+                  
+                     //if it managed to get this far without throwing an exception, time to place the ship!
+                     //it checks what ship we're placing, then deletes any old one and places a new one
+                     //this is so that you can't have a fleet of like 5 aircraft carriers or smth
+                     //we can add more ships at any time just lmk, I only did 4 cus I think one is the same size?
+                  
+                     if(selected == target){
+                        clear(target);
+                        place(target);
+                     }
+                     else if(selected == carrier) {
+                        check();
+                        clear(carrier);
+                        place(carrier);
+                     }
+                     else if(selected == cruiser) {
+                        check();
+                        clear(cruiser);
+                        place(cruiser);
+                     }
+                     else if(selected == destroyer) {
+                        check();
+                        clear(destroyer);
+                        place(destroyer);
+                     }
+                     else if(selected == submarine) {
+                        check();
+                        clear(submarine);
+                        place(submarine);
+                     }
+                     else if(selected == patrolBoat) {
+                        check();
+                        clear(patrolBoat);
+                        place(patrolBoat);
+                     }
                   }
-                  else if(selected == carrier) {
-                     check();
-                     clear(carrier);
-                     place(carrier);
+                  catch(ArrayIndexOutOfBoundsException aioobe) {
+                     //if you try to put the ship out of bounds, or on top of another ship... ERROR!
+                     JOptionPane.showMessageDialog(null, "Error! Cannot place ship there :(");
                   }
-                  else if(selected == cruiser) {
-                     check();
-                     clear(cruiser);
-                     place(cruiser);
-                  }
-                  else if(selected == destroyer) {
-                     check();
-                     clear(destroyer);
-                     place(destroyer);
-                  }
-                  else if(selected == submarine) {
-                     check();
-                     clear(submarine);
-                     place(submarine);
-                  }
-                  else if(selected == patrolBoat) {
-                     check();
-                     clear(patrolBoat);
-                     place(patrolBoat);
-                  }
+                  //this is a check to see if it needs to enable or disable the ready state
+                  // "ready" means you can start the battle, so all your ships are placed
+                  if(carrier[0] != null && cruiser[0] != null && destroyer[0] != null && submarine[0] != null && patrolBoat[0] != null) jbReady.setEnabled(true);
                }
-               catch(ArrayIndexOutOfBoundsException aioobe) {
-                  //if you try to put the ship out of bounds, or on top of another ship... ERROR!
-                  JOptionPane.showMessageDialog(null, "Error! Cannot place ship there :(");
-               }
-               //this is a check to see if it needs to enable or disable the ready state
-               // "ready" means you can start the battle, so all your ships are placed
-               if(carrier[0] != null && cruiser[0] != null && destroyer[0] != null && submarine[0] != null && patrolBoat[0] != null) jbReady.setEnabled(true);
             }
          });
       }//close constructor for Coordinate
@@ -335,6 +351,14 @@ public class BattleshipClient extends JFrame implements ActionListener {
    
    public void playing()
    {//open Playing method
+      jlPlayer.setText("Ships locked! Ready for battle.");
+      jlEnemy.setText("Click this grid to fire!");
+      for(int y = 0; y < coordinates.length; y++) {
+         for(int x = 0; x < coordinates.length; x++) {
+            coordinates[x][y].active = false;
+            enemyCoords[x][y].active = true;
+         }
+      }
       try
       {//open try
          bin = new BufferedReader(new InputStreamReader(s.getInputStream()));
