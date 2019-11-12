@@ -111,19 +111,22 @@ public class BattleshipServer
       PAY ATTENTION HERE!
       THIS IS ALL THE NEW STUFF (plus hitDetection Method)*/
       try{//open try  
+         oos = new ObjectOutputStream(cs.getOutputStream());
          while(!win_Condition){//open while loop
             oos.writeBoolean(yourTurn);
-            
+          
             int xCoord = ois.readInt();
             int yCoord = ois.readInt();
+            console("Coordinates to shoot are " + xCoord + " and " + yCoord);
             hitDetection(xCoord, yCoord);
             oos.writeBoolean(win_Condition);
+            oos.flush();
          }//close while loop
          oos.writeUTF(winner);
       }//close try
       catch(IOException ioe){//open catch
-      ioe.printStackTrace();
-   }//close catch
+         ioe.printStackTrace();
+      }//close catch
       
    }//close constructor
    
