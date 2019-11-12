@@ -132,8 +132,6 @@ public class BattleshipClient extends JFrame implements ActionListener {
       jbPatrolBoat.addActionListener(this);
       jbRotate.addActionListener(this);
       jbReady.addActionListener(this);
-      jbTarget.addActionListener(gameIsPlaying);
-      jbFire.addActionListener(gameIsPlaying);
       jbReady.setEnabled(false);
       jpShips.add(jbCarrier);
       jpShips.add(jbCruiser);
@@ -161,7 +159,7 @@ public class BattleshipClient extends JFrame implements ActionListener {
       
       /* new piece of code to try and fix button issues*/
       if(ready){//open if
-        gameIsPlaying = new Playing();
+        gameIsPlaying = new Playing(jbTarget, jbFire);
       }//close if
    }//close constructor
    
@@ -350,8 +348,7 @@ public class BattleshipClient extends JFrame implements ActionListener {
             }
          }
       }
-
-         
+  
       //toString for each coordinate, just for our testing purposes, no use in game
       public String toString() {
          return "Coordinate (" + x + ", " + y + ") - Occupied: " + occupied;
@@ -391,8 +388,15 @@ public class BattleshipClient extends JFrame implements ActionListener {
    }
    
    public class Playing implements ActionListener{//open playing class
-      Playing()
+      JButton _jbTarget;
+      JButton _jbFire;
+      
+      Playing(JButton jbTarget, JButton jbFire)
       {//open Playing method
+         _jbTarget = jbTarget;
+         _jbFire = jbFire;
+         _jbTarget.addActionListener(this);
+         _jbFire.addActionListener(this);
          jlPlayer.setText("Ships locked! Ready for battle.");
          jlEnemy.setText("Click this grid to fire!");
          for(int y = 0; y < coordinates.length; y++) {
@@ -437,11 +441,11 @@ public class BattleshipClient extends JFrame implements ActionListener {
          
       public void actionPerformed(ActionEvent ae) {
          Object pressedButton = ae.getSource();
-         if(pressedButton == jbTarget) {selected = target; System.out.println("Hello!");}
-         else if(pressedButton == jbFire){
+         if(pressedButton == _jbTarget) {selected = target; /*test print*/System.out.println("Hello!");}
+         else if(pressedButton == _jbFire){
             toShoot = new Ship("Target", 1, target[0].x, target[0].y, target[0].placedOrientation);
             shoot = true;
-            System.out.println("Goodbye");
+            System.out.println("Goodbye"); //test print
          }
       }//close actionPerformed
    }//close playing class
