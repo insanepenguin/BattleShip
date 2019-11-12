@@ -63,6 +63,7 @@ public class BattleshipClient extends JFrame implements ActionListener {
    boolean shoot = false;
    boolean yourTurn;
    boolean win_Condition;
+   boolean ready = false;
       
    //setting up the grid!
    public BattleshipClient() {
@@ -111,7 +112,6 @@ public class BattleshipClient extends JFrame implements ActionListener {
             jpEnemyGrid.add(enemyCoords[x][y]);
          }
       }
-
       
       //this is just taking care of GUI assembly, button setup component add etc.
       JPanel jpEast = new JPanel();
@@ -157,7 +157,12 @@ public class BattleshipClient extends JFrame implements ActionListener {
       setLocationRelativeTo(null);
       setDefaultCloseOperation(EXIT_ON_CLOSE);
       setVisible(true);
-   }
+      
+      /* new piece of code to try and fix button issues*/
+      if(ready)
+         playing();
+      
+   }//close constructor
    
    //here is the coordinate inner class! these guys do the heavy lifting
    //they have location, if they're occupied by a ship, and if they're shot
@@ -352,6 +357,38 @@ public class BattleshipClient extends JFrame implements ActionListener {
       }
    }//close Coordinate class
    
+   //button stuff, comments are hard
+   public void actionPerformed(ActionEvent ae) {
+      Object pressedButton = ae.getSource();
+      if(pressedButton == jbCarrier) selected = carrier;
+      else if(pressedButton == jbCruiser) selected = cruiser;
+      else if(pressedButton == jbDestroyer) selected = destroyer;
+      else if(pressedButton == jbSubmarine) selected = submarine;
+      else if(pressedButton == jbPatrolBoat) selected = patrolBoat;
+      else if(pressedButton == jbRotate) {
+         if (rotate == true) rotate = false;
+         else rotate = true;
+      }
+      else if(pressedButton == jbTarget) selected = target;
+      else if(pressedButton == jbReady){
+         selected = null;
+         jpFireControl.setVisible(true);
+         jpEnemyGrid.setVisible(true);
+         jpShips.setVisible(false);
+         //MAKE SHIPS OF EACH AND SEND TO SERVER
+         ships[0] = new Ship("Carrier", 5, carrier[0].x, carrier[0].y, carrier[0].placedOrientation);
+         ships[1] = new Ship("Cruiser", 4, cruiser[0].x, cruiser[0].y, cruiser[0].placedOrientation);
+         ships[2] = new Ship("Destroyer", 3, destroyer[0].x, destroyer[0].y, destroyer[0].placedOrientation);
+         ships[3] = new Ship("Submarine", 3, submarine[0].x, submarine[0].y, submarine[0].placedOrientation);
+         ships[4] = new Ship("Patrol Boat", 2, patrolBoat[0].x, patrolBoat[0].y, patrolBoat[0].placedOrientation);
+         ready = true;
+      }
+      else if(pressedButton == jbFire){
+         toShoot = new Ship("Target", 1, target[0].x, target[0].y, target[0].placedOrientation);
+         shoot = true;
+      }
+   }//close actionPreformed
+   
    public void playing()
    {//open Playing method
       jlPlayer.setText("Ships locked! Ready for battle.");
@@ -399,38 +436,6 @@ public class BattleshipClient extends JFrame implements ActionListener {
    //getter for coordinates, not sure if we'll need but w/e
    public Coordinate getCoords(int x, int y) {
       return coordinates[x][y];
-   }
-   
-   //button stuff, comments are hard
-   public void actionPerformed(ActionEvent ae) {
-      Object pressedButton = ae.getSource();
-      if(pressedButton == jbCarrier) selected = carrier;
-      else if(pressedButton == jbCruiser) selected = cruiser;
-      else if(pressedButton == jbDestroyer) selected = destroyer;
-      else if(pressedButton == jbSubmarine) selected = submarine;
-      else if(pressedButton == jbPatrolBoat) selected = patrolBoat;
-      else if(pressedButton == jbRotate) {
-         if (rotate == true) rotate = false;
-         else rotate = true;
-      }
-      else if(pressedButton == jbTarget) selected = target;
-      else if(pressedButton == jbReady){
-         selected = null;
-         jpFireControl.setVisible(true);
-         jpEnemyGrid.setVisible(true);
-         jpShips.setVisible(false);
-         //MAKE SHIPS OF EACH AND SEND TO SERVER
-         ships[0] = new Ship("Carrier", 5, carrier[0].x, carrier[0].y, carrier[0].placedOrientation);
-         ships[1] = new Ship("Cruiser", 4, cruiser[0].x, cruiser[0].y, cruiser[0].placedOrientation);
-         ships[2] = new Ship("Destroyer", 3, destroyer[0].x, destroyer[0].y, destroyer[0].placedOrientation);
-         ships[3] = new Ship("Submarine", 3, submarine[0].x, submarine[0].y, submarine[0].placedOrientation);
-         ships[4] = new Ship("Patrol Boat", 2, patrolBoat[0].x, patrolBoat[0].y, patrolBoat[0].placedOrientation);
-         playing();
-      }
-      else if(pressedButton == jbFire){
-         toShoot = new Ship("Target", 1, target[0].x, target[0].y, target[0].placedOrientation);
-         shoot = true;
-      }
    }
    
    public static void main(String[] args) {
