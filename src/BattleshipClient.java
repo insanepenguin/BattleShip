@@ -106,7 +106,6 @@ public class BattleshipClient extends JFrame implements ActionListener {
          }
       }
       
-      
       jpEnemyGrid = new JPanel(new GridLayout(0,10));
       for(int y = 0; y < 10; y++) {
          for(int x = 0; x < 10; x++) {
@@ -158,7 +157,6 @@ public class BattleshipClient extends JFrame implements ActionListener {
       setDefaultCloseOperation(EXIT_ON_CLOSE);
       setVisible(true);
       
-      System.out.println("not fuck?");
       synchronized(syncOn){//open Sync block
          try{//open try
             syncOn.wait();
@@ -166,7 +164,6 @@ public class BattleshipClient extends JFrame implements ActionListener {
          catch(InterruptedException ie)
          {}//open/close catch
       }//close Sync Block
-      System.out.println("FUCK");
       gameIsPlaying = new Playing(jbTarget, jbFire); 
    }//close constructor
    
@@ -428,10 +425,11 @@ public class BattleshipClient extends JFrame implements ActionListener {
             */
            while(!win_Condition){//open while loop
             yourTurn = ois.readBoolean();
+            System.out.println("yourTurn should be true " + yourTurn);
                if(yourTurn){//open if
                   if(shoot)
                   {//open if
-                     oos.writeObject(toShoot.getStartX()); //send String instead of toShoot object/Ship
+                     oos.writeObject(toShoot.getStartX()); //send the X Y coordinates
                      oos.writeObject(toShoot.getStartY());
                      win_Condition = ois.readBoolean();
                      shoot = false;
@@ -450,11 +448,10 @@ public class BattleshipClient extends JFrame implements ActionListener {
          
       public void actionPerformed(ActionEvent ae) {
          Object pressedButton = ae.getSource();
-         if(pressedButton == _jbTarget) {selected = target; /*test print*/System.out.println("Hello!");}
+         if(pressedButton == _jbTarget) selected = target;
          else if(pressedButton == _jbFire){
             toShoot = new Ship("Target", 1, target[0].x, target[0].y, target[0].placedOrientation);
             shoot = true;
-            System.out.println("Goodbye"); //test print
          }
       }//close actionPerformed
    }//close playing class
