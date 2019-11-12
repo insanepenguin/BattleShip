@@ -24,11 +24,15 @@ import java.awt.event.*;
 
 public class BattleshipServer
 {//open class
-   Boolean Win_Condition = false;
-   BattleshipClient player1;
+   Boolean win_Condition = false;
+   int player1HP = 17;
+   int player2HP = 17;
    BattleshipClient player2;
    Boolean[][] player1Field = new Boolean[10][10];
    Boolean[][] player2Field = new Boolean[10][10];
+   Boolean yourTurn = true;
+   Boolean hit = false;
+   String winner;
    
    ServerSocket ss;
    Socket cs;
@@ -100,6 +104,27 @@ public class BattleshipServer
          }
       }
       console("Ships recieved, starting game");
+      
+      /*AFTER THIS POINT IS THE GAME LOGIC, IN ORDER
+      THIS IS A VERY IMPORTANT BLOCK OF CODE.
+      THIS IS WHERE THE LOGIC OF THE GAME IS ACTUALLY HAPPENING
+      PAY ATTENTION HERE!
+      THIS IS ALL THE NEW STUFF (plus hitDetection Method)*/
+      try{//open try  
+         while(!win_Condition){//open while loop
+            oos.writeBoolean(yourTurn);
+            
+            int xCoord = ois.readInt();
+            int yCoord = ois.readInt();
+            hitDetection(xCoord, yCoord);
+            oos.writeBoolean(win_Condition);
+         }//close while loop
+         oos.writeUTF(winner);
+      }//close try
+      catch(IOException ioe){//open catch
+      ioe.printStackTrace();
+   }//close catch
+      
    }//close constructor
    
    //a method so we don't have to be like "jtaDiagnostics.setText(jtaDiagnostics.getText() + '\n' + w/e) every time lol
@@ -129,7 +154,7 @@ public class BattleshipServer
                   //this is setting the boolean values of the grids to true for the ships placement!
                   for(int i = 0; i < shipsReadIn[j].getCoordinates().length; i++) {
                      String[] assignable = shipsReadIn[j].getCoordinates()[i].split(", ");
-                     synchronized(Win_Condition) {
+                     synchronized(win_Condition) {
                         if(player == 0) {
                            player1Field[Integer.parseInt(assignable[0])][Integer.parseInt(assignable[1])] = true;
                         }
@@ -173,11 +198,43 @@ public class BattleshipServer
       }
    }
    
+   //This is the code that will handle if something is hit
+   public void hitDetection(int x, int y){//open hitDetection method
+      if(yourTurn){//open 1st if
+         console("Shot taken at " + x + " " + y);
+         if(player2Field[x][y]){//open 2nd if
+            hit = true;
+            player2HP--;
+            console("Hit!");
+            if(player2HP == 0){//open 3rd if
+               win_Condition = true;
+               winner = "Player 1 has won!";
+            }//close 3rd if
+         }//close 2nd if
+         console("Miss!");
+         yourTurn = false;
+      }//close 1st if
+      else{
+         console("Shot taken at " + x + " " + y);
+         if(player1Field[x][y]){//open 1st if
+            hit = true;
+            player1HP--;
+            console("Hit!");
+            if(player1HP == 0){//open 2nd if
+               win_Condition = true;
+               winner = "Player 2 has won!";
+            }//close 2nd if
+         }//close 1st if
+         console("Miss!");
+         yourTurn = true;
+      }//close else
+   }//close hitDetection method
+   
    //If we don't thread it we can just use Player1.getHP() / Player2.getHP(), whichever player's current turn is going
    // if we thread it, we should be able to do Player.getHP() regardless.
    //Method? or just Check at start of each turn?
    //if Player.getHP() == 0
-   //    Win_Condition = true;
+   //    win_Condition = true;
    //else
    //    
    public static void main(String[] args)
