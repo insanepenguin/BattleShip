@@ -7,24 +7,28 @@ import java.net.*;
 import java.io.*;
 
 /**
-* This class serves as our Client class for Battleship.
-* It creates the GUI/Grid, and calls the Ship class to create their objects.
-* It communicates with the server to send back and forth shot locations and hits
+* This class is here for me to experiment on how best to implement the gui and any user interactivity
+* I want to keep it separate from Client.java for now because it doesn't have any server <-> client connection code
+* Also I'm not gonna write javadoc comments, this opener is more of a meme than anything
 *
-* @author JavaPack Survivors
+* @author Ben Shapiro
 * @version 2019-10-27
 */
 
 public class BattleshipClient extends JFrame implements ActionListener {
+
+   //synchronization object
+   String syncOn = new String("Sync on me");
 
    //All server-client relations stuff
    Socket s;
    BufferedReader bin;
    PrintWriter pout;
    String ipAddress;
-   // ObjectOutputStream oos;
-//    ObjectInputStream ois;
-   String syncOn = new String("");
+   ObjectOutputStream oos;
+   ObjectInputStream ois;
+   boolean win = true;
+   boolean yourTurn = false;
 
    //which ship the player is placing down, if they aren't in the placing phase it's null
    private Coordinate[] selected;
@@ -62,9 +66,6 @@ public class BattleshipClient extends JFrame implements ActionListener {
    //what direction you want to place the ship in
    boolean rotate = false;
    boolean shoot = false;
-   boolean yourTurn;
-   boolean win_Condition;
-   boolean ready = false;
       
    //setting up the grid!
    public BattleshipClient() {
@@ -105,6 +106,7 @@ public class BattleshipClient extends JFrame implements ActionListener {
          }
       }
       
+      
       jpEnemyGrid = new JPanel(new GridLayout(0,10));
       for(int y = 0; y < 10; y++) {
          for(int x = 0; x < 10; x++) {
@@ -112,6 +114,7 @@ public class BattleshipClient extends JFrame implements ActionListener {
             jpEnemyGrid.add(enemyCoords[x][y]);
          }
       }
+
       
       //this is just taking care of GUI assembly, button setup component add etc.
       JPanel jpEast = new JPanel();
@@ -131,6 +134,8 @@ public class BattleshipClient extends JFrame implements ActionListener {
       jbPatrolBoat.addActionListener(this);
       jbRotate.addActionListener(this);
       jbReady.addActionListener(this);
+      jbTarget.addActionListener(this);
+      jbFire.addActionListener(this);
       jbReady.setEnabled(false);
       jpShips.add(jbCarrier);
       jpShips.add(jbCruiser);
@@ -156,15 +161,15 @@ public class BattleshipClient extends JFrame implements ActionListener {
       setDefaultCloseOperation(EXIT_ON_CLOSE);
       setVisible(true);
       
-      synchronized(syncOn){//open Sync block
-         try{//open try
+      synchronized(syncOn) {
+         try {
             syncOn.wait();
-         }//close try
+         }
          catch(InterruptedException ie) {
-            System.err.print("Something went wrong waiting to start game");
-            ie.printStackTrace();
-         }//open/close catch
-      }//close Sync Block
+            System.err.println("something went wrong, failed to start game");
+         }
+      }
+      playing();
    }//close constructor
    
    //here is the coordinate inner class! these guys do the heavy lifting
@@ -352,12 +357,18 @@ public class BattleshipClient extends JFrame implements ActionListener {
             }
          }
       }
-  
+
+         
       //toString for each coordinate, just for our testing purposes, no use in game
       public String toString() {
          return "Coordinate (" + x + ", " + y + ") - Occupied: " + occupied;
       }
    }//close Coordinate class
+      
+   //getter for coordinates, not sure if we'll need but w/e
+   public Coordinate getCoords(int x, int y) {
+      return coordinates[x][y];
+   }
    
    //button stuff, comments are hard
    public void actionPerformed(ActionEvent ae) {
@@ -371,110 +382,73 @@ public class BattleshipClient extends JFrame implements ActionListener {
          if (rotate == true) rotate = false;
          else rotate = true;
       }
+      else if(pressedButton == jbTarget) selected = target;
       else if(pressedButton == jbReady){
-         synchronized(syncOn){//open synchronization
-            syncOn.notifyAll();
-         }//close synchronization
          selected = null;
          jpFireControl.setVisible(true);
          jpEnemyGrid.setVisible(true);
          jpShips.setVisible(false);
          //MAKE SHIPS OF EACH AND SEND TO SERVER
-         System.out.println("creating array of ships");
          ships[0] = new Ship("Carrier", 5, carrier[0].x, carrier[0].y, carrier[0].placedOrientation);
          ships[1] = new Ship("Cruiser", 4, cruiser[0].x, cruiser[0].y, cruiser[0].placedOrientation);
          ships[2] = new Ship("Destroyer", 3, destroyer[0].x, destroyer[0].y, destroyer[0].placedOrientation);
          ships[3] = new Ship("Submarine", 3, submarine[0].x, submarine[0].y, submarine[0].placedOrientation);
          ships[4] = new Ship("Patrol Boat", 2, patrolBoat[0].x, patrolBoat[0].y, patrolBoat[0].placedOrientation);
-         
-         System.out.println(ships[0] + "\n" + ships[1] + "\n" + ships[2] + "\n" + ships[3] + "\n" + ships[4]);
-         Playing gameIsPlaying = new Playing(/*jbTarget, jbFire*/);
-         gameIsPlaying.start();
-      }
-   }//close actionPerformed
-   
-   //getter for coordinates, not sure if we'll need but w/e
-   public Coordinate getCoords(int x, int y) {
-      return coordinates[x][y];
-   }
-   
-   public class Playing extends Thread implements ActionListener{//open playing class
-//       JButton _jbTarget;
-//       JButton _jbFire;
-      ObjectOutputStream oos;
-      ObjectInputStream ois;
-      
-      Playing(/*JButton jbTarget, JButton jbFire*/)
-      {//open Playing method
-         jbTarget.addActionListener(this);
-         jbFire.addActionListener(this);
-         jlPlayer.setText("Ships locked! Ready for battle.");
-         jlEnemy.setText("Click this grid to fire!");
-         for(int y = 0; y < coordinates.length; y++) {
-            for(int x = 0; x < coordinates.length; x++) {
-               coordinates[x][y].active = false;
-               enemyCoords[x][y].active = true;
-            }
-         }
-         jbTarget.setEnabled(false);
-         jbFire.setEnabled(false); 
-         System.out.println("end of playing constructor");
-      }//close constructor
-      
-      public void run() {
-         System.out.println("thread starting");
-         try
-         {//open try
-            
+         try {
             oos = new ObjectOutputStream(s.getOutputStream());
-            ois = new ObjectInputStream(s.getInputStream());
-            System.out.println("writers initialized");
             oos.writeObject(ships);
             oos.flush();
-            System.out.println("Wrote ships");
-            /*
-            EVERYTHING NEW IS AFTER THIS!
-            THIS IS THE CURRENTLY BEING UPDATED CODE!
-            */
-           while(!win_Condition){//open while loop
-            yourTurn = ois.readBoolean();
-            System.out.println("yourTurn should be true " + yourTurn);
-               if(yourTurn){//open if
-                  jbTarget.setEnabled(true);
-               }//open if
-            }//close while loop
-            String winner = ois.readUTF();
-            JOptionPane.showMessageDialog(null, winner);
-            ois.close();
-            oos.close();
-            
-         }//close try
-         catch(IOException ioe)
-         {//open 1st catch
+            ois = new ObjectInputStream(s.getInputStream());
+            win = ois.readBoolean();
+            System.out.println("win");
+         }
+         catch(IOException ioe) {
             ioe.printStackTrace();
-         }//close 2nd catch
-      }//close run
-         
-      public void actionPerformed(ActionEvent ae) {
-         Object pressedButton = ae.getSource();
-         if(pressedButton == jbTarget) {
-            jbFire.setEnabled(true);
-            selected = target;
          }
-         else if(pressedButton == jbFire){
-            toShoot = new Ship("Target", 1, target[0].x, target[0].y, target[0].placedOrientation);
-            // shoot = true;
-            try {
-               oos.writeUTF(toShoot.getStartX() + ", " + toShoot.getStartY()); //send the X Y coordinates
-               win_Condition = ois.readBoolean();
-            }
-            catch(IOException ioe) {
-               System.err.println("IO error writing coordinates");
-               ioe.printStackTrace();
+         if(!win) {
+            synchronized(syncOn) {
+               syncOn.notifyAll();
             }
          }
-      }//close actionPerformed
-   }//close playing class
+      }
+      else if(pressedButton == jbFire){
+         toShoot = new Ship("Target", 1, target[0].x, target[0].y, target[0].placedOrientation);
+         shoot = true;
+      }
+   }
+   
+   public void playing()
+   {//open Playing method
+      jlPlayer.setText("Ships locked! Ready for battle.");
+      jlEnemy.setText("Click this grid to fire!");
+      for(int y = 0; y < coordinates.length; y++) {
+         for(int x = 0; x < coordinates.length; x++) {
+            coordinates[x][y].active = false;
+            enemyCoords[x][y].active = true;
+         }
+      }
+      try
+      {//open try
+//          bin = new BufferedReader(new InputStreamReader(s.getInputStream()));
+//          pout = new PrintWriter(new OutputStreamWriter(s.getOutputStream()));
+         //TODO loop
+         while(!win) {
+//             yourTurn = ois.readBoolean();
+            System.out.println(yourTurn);
+            if(shoot)
+            {//open if
+               oos.writeObject(toShoot); //send String instead of toShoot object/Ship
+               oos.flush();
+               shoot = false;
+            }//close if
+         }//close while
+      }//close try
+      catch(IOException ioe)
+      {//open 1st catch
+         ioe.printStackTrace();
+      }//close 2nd catch
+   }//close playing method
+
    
    public static void main(String[] args) {
       new BattleshipClient();
