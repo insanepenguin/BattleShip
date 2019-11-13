@@ -22,9 +22,8 @@ public class BattleshipClient extends JFrame implements ActionListener {
    BufferedReader bin;
    PrintWriter pout;
    String ipAddress;
-   ObjectOutputStream oos;
-   ObjectInputStream ois;
-   Playing gameIsPlaying;
+   // ObjectOutputStream oos;
+//    ObjectInputStream ois;
    String syncOn = new String("");
 
    //which ship the player is placing down, if they aren't in the placing phase it's null
@@ -161,10 +160,11 @@ public class BattleshipClient extends JFrame implements ActionListener {
          try{//open try
             syncOn.wait();
          }//close try
-         catch(InterruptedException ie)
-         {}//open/close catch
+         catch(InterruptedException ie) {
+            System.err.print("Something went wrong waiting to start game");
+            ie.printStackTrace();
+         }//open/close catch
       }//close Sync Block
-      gameIsPlaying = new Playing(jbTarget, jbFire); 
    }//close constructor
    
    //here is the coordinate inner class! these guys do the heavy lifting
@@ -380,11 +380,16 @@ public class BattleshipClient extends JFrame implements ActionListener {
          jpEnemyGrid.setVisible(true);
          jpShips.setVisible(false);
          //MAKE SHIPS OF EACH AND SEND TO SERVER
+         System.out.println("creating array of ships");
          ships[0] = new Ship("Carrier", 5, carrier[0].x, carrier[0].y, carrier[0].placedOrientation);
          ships[1] = new Ship("Cruiser", 4, cruiser[0].x, cruiser[0].y, cruiser[0].placedOrientation);
          ships[2] = new Ship("Destroyer", 3, destroyer[0].x, destroyer[0].y, destroyer[0].placedOrientation);
          ships[3] = new Ship("Submarine", 3, submarine[0].x, submarine[0].y, submarine[0].placedOrientation);
          ships[4] = new Ship("Patrol Boat", 2, patrolBoat[0].x, patrolBoat[0].y, patrolBoat[0].placedOrientation);
+         
+         System.out.println(ships[0] + "\n" + ships[1] + "\n" + ships[2] + "\n" + ships[3] + "\n" + ships[4]);
+         Playing gameIsPlaying = new Playing(/*jbTarget, jbFire*/);
+         gameIsPlaying.start();
       }
    }//close actionPerformed
    
@@ -393,16 +398,16 @@ public class BattleshipClient extends JFrame implements ActionListener {
       return coordinates[x][y];
    }
    
-   public class Playing implements ActionListener{//open playing class
-      JButton _jbTarget;
-      JButton _jbFire;
+   public class Playing extends Thread implements ActionListener{//open playing class
+//       JButton _jbTarget;
+//       JButton _jbFire;
+      ObjectOutputStream oos;
+      ObjectInputStream ois;
       
-      Playing(JButton jbTarget, JButton jbFire)
+      Playing(/*JButton jbTarget, JButton jbFire*/)
       {//open Playing method
-         _jbTarget = jbTarget;
-         _jbFire = jbFire;
-         _jbTarget.addActionListener(this);
-         _jbFire.addActionListener(this);
+         jbTarget.addActionListener(this);
+         jbFire.addActionListener(this);
          jlPlayer.setText("Ships locked! Ready for battle.");
          jlEnemy.setText("Click this grid to fire!");
          for(int y = 0; y < coordinates.length; y++) {
@@ -411,14 +416,22 @@ public class BattleshipClient extends JFrame implements ActionListener {
                enemyCoords[x][y].active = true;
             }
          }
+         jbTarget.setEnabled(false);
+         jbFire.setEnabled(false); 
+         System.out.println("end of playing constructor");
+      }//close constructor
+      
+      public void run() {
+         System.out.println("thread starting");
          try
          {//open try
-            bin = new BufferedReader(new InputStreamReader(s.getInputStream()));
-            pout = new PrintWriter(new OutputStreamWriter(s.getOutputStream()));
+            
             oos = new ObjectOutputStream(s.getOutputStream());
             ois = new ObjectInputStream(s.getInputStream());
+            System.out.println("writers initialized");
             oos.writeObject(ships);
-           
+            oos.flush();
+            System.out.println("Wrote ships");
             /*
             EVERYTHING NEW IS AFTER THIS!
             THIS IS THE CURRENTLY BEING UPDATED CODE!
@@ -427,31 +440,38 @@ public class BattleshipClient extends JFrame implements ActionListener {
             yourTurn = ois.readBoolean();
             System.out.println("yourTurn should be true " + yourTurn);
                if(yourTurn){//open if
-                  if(shoot)
-                  {//open if
-                     oos.writeObject(toShoot.getStartX()); //send the X Y coordinates
-                     oos.writeObject(toShoot.getStartY());
-                     win_Condition = ois.readBoolean();
-                     shoot = false;
-                     yourTurn = false;
-                  }//close if
+                  jbTarget.setEnabled(true);
                }//open if
             }//close while loop
             String winner = ois.readUTF();
             JOptionPane.showMessageDialog(null, winner);
+            ois.close();
+            oos.close();
+            
          }//close try
          catch(IOException ioe)
          {//open 1st catch
             ioe.printStackTrace();
          }//close 2nd catch
-      }//close Playing constructor
+      }//close run
          
       public void actionPerformed(ActionEvent ae) {
          Object pressedButton = ae.getSource();
-         if(pressedButton == _jbTarget) selected = target;
-         else if(pressedButton == _jbFire){
+         if(pressedButton == jbTarget) {
+            jbFire.setEnabled(true);
+            selected = target;
+         }
+         else if(pressedButton == jbFire){
             toShoot = new Ship("Target", 1, target[0].x, target[0].y, target[0].placedOrientation);
-            shoot = true;
+            // shoot = true;
+            try {
+               oos.writeUTF(toShoot.getStartX() + ", " + toShoot.getStartY()); //send the X Y coordinates
+               win_Condition = ois.readBoolean();
+            }
+            catch(IOException ioe) {
+               System.err.println("IO error writing coordinates");
+               ioe.printStackTrace();
+            }
          }
       }//close actionPerformed
    }//close playing class
