@@ -1,3 +1,4 @@
+import java.lang.reflect.Array;
 import java.util.*;
 import java.net.*;
 import java.io.*;
@@ -29,6 +30,7 @@ public class BattleshipServer
    Player player2;
    boolean[][] Player1Field = new boolean[10][10];
    boolean[][] Player2Field = new boolean[10][10];
+   Object sync;
    
    ServerSocket ss;
    Socket cs;
@@ -138,15 +140,9 @@ public class BattleshipServer
       //TODO:Add player instantiations and start the game
       player1 = new Player(Player1Field,StartingHP);
       player2 = new Player(Player2Field,StartingHP);
-      while(Win_Condition){
-         int p1T= player1.turn(0,0);//Retruns a number to help send msg to ppl
-         int p2T= player1.turn(0,0);
-         if( player1.isWinner() || player2.isWinner()){
-            Win_Condition = true;
-         }
-         //TODO:Switch for what happen in a separate method
+      Game(player1,player2);
 
-      }
+
    }//close constructor
    
    //a method so we don't have to be like "jtaDiagnostics.setText(jtaDiagnostics.getText() + '\n' + w/e) every time lol
@@ -162,8 +158,29 @@ public class BattleshipServer
    //    Win_Condition = true;
    //else
    public void Game(Player p1,Player p2){
-         //TODO: Wait for both players to pass in cords and then play the turn
+      //Wait for both players to pass in cords and then play the turn
+
+      while(Win_Condition){
+         //Wait for the cords to be sent
+         //Needs 4 ints 2xs and 2ys one pair form each player.
+         synchronized (sync){
+            try {
+               sync.wait();
+            } catch (InterruptedException e) {
+               e.printStackTrace();
+            }
+         }
+         int p1T= p1.turn(0,0);//Retruns a number to help send msg to ppl
+         int p2T= p2.turn(0,0);
+         System.out.println(p1T+"||"+p2T);
+         if( player1.isWinner() || player2.isWinner()){
+            Win_Condition = true;
+         }
+      }
+
+
    }
+
    public static void main(String[] args)
    {//open main
       new BattleshipServer();
