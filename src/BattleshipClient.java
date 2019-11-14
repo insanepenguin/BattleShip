@@ -7,12 +7,11 @@ import java.net.*;
 import java.io.*;
 
 /**
-* This class is here for me to experiment on how best to implement the gui and any user interactivity
-* I want to keep it separate from Client.java for now because it doesn't have any server <-> client connection code
-* Also I'm not gonna write javadoc comments, this opener is more of a meme than anything
+* This class is the Client of the Battleship game, and handles the client's gui, and part of the game
+* (sending and receiving if you hit or not and placing the ships at the start)
 *
-* @author Ben Shapiro
-* @version 2019-10-27
+* @author JavaPack Survivors
+* @version 2019-11-14
 */
 
 public class BattleshipClient extends JFrame implements ActionListener {
