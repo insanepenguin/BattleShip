@@ -139,9 +139,11 @@ public class BattleshipServer
       player1 = new Player(Player1Field,StartingHP);
       player2 = new Player(Player2Field,StartingHP);
       while(Win_Condition){
-         int p1T= player1.turn(0,0);
+         int p1T= player1.turn(0,0);//Retruns a number to help send msg to ppl
          int p2T= player1.turn(0,0);
-
+         if( player1.isWinner() || player2.isWinner()){
+            Win_Condition = true;
+         }
          //TODO:Switch for what happen in a separate method
 
       }

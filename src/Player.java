@@ -1,7 +1,7 @@
 import java.lang.reflect.Array;
 
 public class Player {
-    boolean winner = false;
+    boolean winner;
     int hp = 0;
     boolean[][] grid = new boolean[10][10];
 
@@ -10,11 +10,12 @@ public class Player {
         hp = _hp;
     }
 
-    public int turn(String x,int y){
-        if(hit(Integer.parseInt(x),y)){
+    public int turn(int x,int y){
+        if(hit(x,y)){
             hp--;
             if (hp == 0){
-                return -1;
+                winner = false;
+                return 0;
             }
             return 0;
         }
@@ -22,5 +23,29 @@ public class Player {
     }
     public boolean hit(int x, int y){
         return grid[x][y];
+    }
+
+    public boolean isWinner() {
+        return winner;
+    }
+
+    public void setWinner(boolean winner) {
+        this.winner = winner;
+    }
+
+    public int getHp() {
+        return hp;
+    }
+
+    public void setHp(int hp) {
+        this.hp = hp;
+    }
+
+    public boolean[][] getGrid() {
+        return grid;
+    }
+
+    public void setGrid(boolean[][] grid) {
+        this.grid = grid;
     }
 }
