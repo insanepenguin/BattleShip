@@ -16,13 +16,12 @@ public class Ship implements Serializable
    private int startY; //the vertical startpoint of the ship
    private boolean orientation; //whether or not the ship is vertical or horizontal
    
-   public Ship(String _name, int _arrayLength, int _x, int _y, boolean _orientation)
-   {//open constructor
+   public Ship(String _name, int _arrayLength, int _x, int _y, boolean _orientation) {
    
       //Array, two ints, orientation
       
-      //I'M NOT SURE HOW THIS IS GOING TO BE IMPLEMENTED, BUT I'M NEED TO SEE IT BEFORE I CONTINUE PSUEDO CODE ON THE OTHER CLASSES
-      //I believe 4 Outter Classes will be more than enough to handle the game (and as many inner/anonymous classes as we need)
+      //I'M NOT SURE HOW THIS IS GOING TO BE IMPLEMENTED, BUT I'M NEED TO SEE IT BEFORE I CONTINUE SUDO CODE ON THE OTHER CLASSES
+      //I believe 4 Outer Classes will be more than enough to handle the game (and as many inner/anonymous classes as we need)
    
    
       //name, length, two ints, orientation
