@@ -94,7 +94,7 @@ public class BattleshipClient extends JFrame implements ActionListener {
                throw new IOException();
             }//close
             s = new Socket(ipAddress, 16789);
-            //new Recieve(s).start();     DONT CURRENTLY NEED RECIEVER
+            //new Receive(s).start();     DONT CURRENTLY NEED RECIEVER
          }//close try
          catch(IOException ioe) 
          {//open 1st catch
@@ -144,6 +144,7 @@ public class BattleshipClient extends JFrame implements ActionListener {
       jbReady.addActionListener(this);
       jbTarget.addActionListener(this);
       jbFire.addActionListener(this);
+      jbSend.addActionListener(this);
       jbReady.setEnabled(false);
       jpShips.add(jbCarrier);
       jpShips.add(jbCruiser);
@@ -167,19 +168,22 @@ public class BattleshipClient extends JFrame implements ActionListener {
       jpCenter.add(jpShips, BorderLayout.CENTER);
       add(jpCenter, BorderLayout.CENTER);
       
+      //make Enter press the "jbSend" button
+      getRootPane().setDefaultButton(jbSend);
+      
+      //make the text area un-editable
+      jtaChatBox.setEnabled(false);
+      jtaChatBox.setLineWrap(true);
+      jtaChatBox.setWrapStyleWord(true);
+      jtaChatBox.setText("Waiting for both players to connect");
+      
       //final setup for the GUI
       setTitle("Battleship Client by JavaPack Survivors!");
       pack();
       setLocationRelativeTo(null);
       setDefaultCloseOperation(EXIT_ON_CLOSE);
       setVisible(true);
-      
-      try{
-         pout = new PrintWriter(new OutputStreamWriter(s.getOutputStream()));
-      }//close try
-      catch(IOException ioe){
-         System.err.println("There was a problem instantiating the Chat connection");
-      }//close catch
+     
       synchronized(syncOn) {
          try {
             syncOn.wait();
@@ -383,26 +387,27 @@ public class BattleshipClient extends JFrame implements ActionListener {
       }
    }//close Coordinate class
 
-    public class Recieve extends Thread{//open Recieve innerclass
+    public class Receive extends Thread{//open Receive innerclass
       Socket sock;
       String message;
       
-      public Recieve(Socket _sock) 
-      {//open Recieve constructor
+      public Receive(Socket _sock){//open Receive constructor
          sock = _sock;
                   
-         try 
-         {//open try
+         try{//open try
             setName(InetAddress.getLocalHost() + "");
+            pout = new PrintWriter(new OutputStreamWriter(s.getOutputStream()));
          }//close try
-         catch(UnknownHostException uhe) 
-         {//open catch
+         catch(UnknownHostException uhe){//open 1st catch
             uhe.printStackTrace();
-         }//close catch
-      }//close Recieve constructor
+         }//close 1st catch
+         catch(IOException ioe){//open 1st catch
+            System.err.println("There was a problem instantiating the Chat connection");
+         }//close 2nd catch catch
+      }//close Receive constructor
          
       public void run() 
-      {//open Run method (for Recieve class?)
+      {//open Run method (for Receive class?)
          try 
          {//open try
             BufferedReader bin = new BufferedReader(new InputStreamReader(sock.getInputStream()));
@@ -410,19 +415,22 @@ public class BattleshipClient extends JFrame implements ActionListener {
             {//open while
                message = bin.readLine();
                jtaChatBox.setText(jtaChatBox.getText() + "\n" + message);
-               ScrollBar.setValue(ScrollBar.getMaximum()+1);
+               ScrollBar.setValue((ScrollBar.getMaximum() + 5));
             }//close while
             bin.close();
          }//close try
+         catch(SocketException se){//open 1st catch
+            System.exit(9);
+         }//close 1st catch
          catch(IOException ioe) 
          {//open 2nd catch
             System.out.println("[Unexpected IO error; disconnecting from server]");
             ioe.printStackTrace();
          }//close 2nd catch
-      }//close run method for Recieve 
-   }//close Recieve innerclass
+      }//close run method for Receive 
+   }//close Receive innerclass
       
-   //button stuff, comments are hard
+   //actionPerformed, for all the button events we made earlier
    public void actionPerformed(ActionEvent ae) {
       Object pressedButton = ae.getSource();
       if(pressedButton == jbCarrier) selected = carrier;
@@ -437,7 +445,6 @@ public class BattleshipClient extends JFrame implements ActionListener {
       else if(pressedButton == jbFire) fire();
    }
    
-   
    // BEGINNING OF METHODS FOR THE ACTION PERFORMED SECTION OF CODE!
    //method to change the orientation of the ships being placed
    public void rotate(){
@@ -449,16 +456,19 @@ public class BattleshipClient extends JFrame implements ActionListener {
    public void sendMessage(){
    String message = jtfInput.getText();
       if(message.trim().equals("")) {
-      //don't do nothin! we don't want people sending just blank space
+      //Don't send anything, don't want blank messages sent
       }
       else{
          pout.println(message);
          pout.flush();
+         jtfInput.setText("");
       }
+      jtfInput.requestFocus();
    }//close sendMessage method
    
    //Method for when you hit the ready button, prepares the actual playing of the game
    public void ready(){
+      new Receive(s).start();
       selected = null;
       jpGameRunning.setVisible(true);
       jpEnemyGrid.setVisible(true);
@@ -476,9 +486,8 @@ public class BattleshipClient extends JFrame implements ActionListener {
          oos = new ObjectOutputStream(s.getOutputStream());
          oos.writeObject(ships);
          oos.flush();
-         ois = new ObjectInputStream(s.getInputStream());
-         win = ois.readBoolean();
-         System.out.println("win");
+         //ois = new ObjectInputStream(s.getInputStream());
+         //win = ois.readBoolean();
       }//close try
       catch(IOException ioe) {
          ioe.printStackTrace();
@@ -488,15 +497,16 @@ public class BattleshipClient extends JFrame implements ActionListener {
             syncOn.notifyAll();
          }//close sync
       }//close if
+      jtfInput.requestFocus();
    }//close ready method
    
    //method to create the set of coordinates that would be sent as a ship object
    public void fire(){
       toShoot = new Ship("Target", 1, target[0].x, target[0].y, target[0].placedOrientation);
       shoot = true;
+      jtfInput.requestFocus();
    }//close fire method
    //ENDING OF THE METHODS FOR THE ACTION PERFORMED SECTION OF CODE
-   
    
    //THIS IS CURRENTLY A REPEAT SECTION OF CODE!
    //THIS WAS A QUICK AND SLOPPY ATTEMPT AT GAME LOGIC
@@ -535,4 +545,4 @@ public class BattleshipClient extends JFrame implements ActionListener {
    public static void main(String[] args) {
       new BattleshipClient();
    }
-}
+}//close main
