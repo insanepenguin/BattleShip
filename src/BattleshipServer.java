@@ -33,6 +33,7 @@ public class BattleshipServer
    Boolean hit = false;
    String winner;
    String sync = new String("");
+   String currentMsg = ""; // this string is for the chat messages sent out to the clients
    
    ServerSocket ss;
    Socket cs;
@@ -82,7 +83,8 @@ public class BattleshipServer
          for(int i = 0; i < 2; i++)
          {//open for loop
             cs = ss.accept();
-            Reciever thread = new Reciever(cs, i);
+            ShipReciever thread = new ShipReciever(cs, i);
+            Connection chatHander = new Connection(cs, i);
             playersReady[i] = thread;
             thread.start();
             console("Player " + (i + 1) + " Connected @" + cs.getInetAddress());       //update text area saying someone connected
@@ -151,16 +153,16 @@ public class BattleshipServer
    }//close constructor
    
    //a method so we don't have to be like "jtaDiagnostics.setText(jtaDiagnostics.getText() + '\n' + w/e) every time lol
-   public void console(String msg) 
+   public void console(String msg)
    {//open console updating method
       jtaDiagnostics.setText(jtaDiagnostics.getText() + '\n' + msg);
    }//close console updating method
    
-   public class Reciever extends Thread {
+   public class ShipReciever extends Thread {
       Socket sock;
       int player;
       
-      public Reciever(Socket cs, int i) {
+      public ShipReciever(Socket cs, int i) {
          cs = sock;
          player = i;
       }
@@ -225,7 +227,68 @@ public class BattleshipServer
       }
    }
    
-   public void Game(Player p1,Player p2){
+   //connection inner class, this handles everything chat related
+   public class Connection extends Thread {
+    
+     Socket sock;
+     int playerNum;
+     
+      public Connection(Socket _cs, int _playerNum) {
+         playerNum = _playerNum + 1;
+         sock = _cs;
+         setName("[Connection " + playerNum + "]");
+      }
+      
+      public void run() {
+         //starts the reciever, then handles sending of chat data
+         new Reciever().start();
+         try {
+            PrintWriter chatWriter = new PrintWriter(new OutputStreamWriter(sock.getOutputStream()));
+            while(sock.isConnected()) {
+               synchronized(sync) {
+                  sync.wait(); //when the reciever recieves something, it updates the global string currentmsg then notifies
+               }
+               chatWriter.println(currentMsg); //once notified, the sender sends out msg to the clients
+               chatWriter.flush();
+            }
+         }
+         catch(InterruptedException ie) {
+            System.err.println(getName() + "Interrupted Exception");
+            ie.printStackTrace();
+         }
+         catch(IOException ioe) {
+            System.err.println(getName() + "IO Error");
+            ioe.printStackTrace();
+         }
+      }
+      
+      //inner class controlling the thread that recieves chat data
+      public class Reciever extends Thread {
+      
+         public Reciever() {
+            setName("[Reciever " + playerNum + "]");
+         }
+         
+         public void run() {
+            try {
+               BufferedReader chatReader = new BufferedReader(new InputStreamReader(sock.getInputStream()));
+               while(sock.isConnected()) {
+                  String incoming = chatReader.readLine();
+                  synchronized(sync) {
+                     currentMsg = "[Player " + playerNum + "]: " + incoming;
+                     sync.notifyAll();
+                  }
+               }
+            }
+            catch(IOException ioe) {
+               System.err.println(getName() + " IO Error");
+               ioe.printStackTrace();
+            }
+         }
+      }
+   }
+   
+   public void Game(Player p1,Player p2) {
    //Wait for both players to pass in cords and then play the turn
 
       while(!win_Condition){
