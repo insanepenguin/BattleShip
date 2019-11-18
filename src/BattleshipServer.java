@@ -116,9 +116,9 @@ public class BattleshipServer
       THIS IS ALL THE NEW STUFF (plus hitDetection Method)*/
       // try{//open try  
 //          ObjectInputStream turnReader = new ObjectInputStream(cs.getInputStream());
-//          // ObjectOutputStream turnWriter = new ObjectOutputStream(cs.getOutputStream());
-//          // turnWriter.writeBoolean(win_Condition);
-//          // System.out.println("writing Win Condition");
+//          ObjectOutputStream turnWriter = new ObjectOutputStream(cs.getOutputStream());
+// //          turnWriter.writeBoolean(win_Condition);
+//          System.out.println("writing Win Condition");
 //          while(!win_Condition){//open while loop
 //             // turnWriter.writeBoolean(yourTurn);
 //             System.out.println("Test");
@@ -249,6 +249,9 @@ public class BattleshipServer
          new Reciever().start();
          try {
             PrintWriter chatWriter = new PrintWriter(new OutputStreamWriter(sock.getOutputStream()));
+            chatWriter.println("[NUMBER]:" + playerNum);
+            chatWriter.flush();
+            // int playerNum = integer.parseInt(incoming.substring(incoming.indexOf(":")));
             console(getName() + "initialized");
             while(sock.isConnected()) {
                synchronized(sync) {
@@ -269,6 +272,29 @@ public class BattleshipServer
          }
       }
       
+      public boolean hitDetection(int x, int y){//open hitDetection method
+         if(playerNum == 1) {
+            if(player2Field[x][y]){//open 2nd if
+               console("Hit!");
+               return true;
+            }
+            else {
+               console("Miss!");
+               return false;
+            }
+         }
+         else {
+            if(player1Field[x][y]){//open 2nd if
+               console("Hit!");
+               return true;
+            }
+            else {
+               console("Miss!");
+               return false;
+            }
+         }
+      }
+      
       //inner class controlling the thread that recieves chat data
       public class Reciever extends Thread {
       
@@ -280,16 +306,30 @@ public class BattleshipServer
             try {
                BufferedReader chatReader = new BufferedReader(new InputStreamReader(sock.getInputStream()));
                console(getName() + "initialized");
-               synchronized(sync) {
-                  currentMsg = "Player connected @" + sock.getInetAddress();
-                  sync.notifyAll();
-               }
-               while(sock.isConnected()) {
-                  String incoming = chatReader.readLine();
-                  synchronized(sync) {
-                     currentMsg = "[Player " + playerNum + "]: " + incoming;
-                     console(currentMsg);
-                     sync.notifyAll();
+//                synchronized(sync) {
+//                   currentMsg = "Player connected @" + sock.getInetAddress();
+//                   sync.notifyAll();
+//                }
+                  while(sock.isConnected()) {
+                     String incoming = chatReader.readLine();
+                     console(incoming);
+                     if(incoming.indexOf("[MSG]:") != -1) {
+                        synchronized(sync) {
+                           currentMsg = "[Player " + playerNum + "]: " + incoming;
+                           sync.notifyAll();
+                        }
+                     }
+                     else {
+                     String[] Coords = incoming.split(",");
+                     int xCoord = Integer.parseInt(Coords[0]);
+                     int yCoord = Integer.parseInt(Coords[1]);                     
+                     boolean hitMiss = hitDetection(xCoord, yCoord);
+                     
+                     
+                     synchronized(sync) {
+                        currentMsg = playerNum + "," + hitMiss + "," + xCoord + "," + yCoord;
+                        sync.notifyAll();
+                     }
                   }
                }
             }
@@ -325,36 +365,54 @@ public class BattleshipServer
 //    }//close game method
 
    //This is the code that will handle if something is hit
-   public void hitDetection(int x, int y){//open hitDetection method
-      if(yourTurn){//open 1st if
-         console("Shot taken at " + x + " " + y);
-         if(player2Field[x][y]){//open 2nd if
-            hit = true;
-            player2.setHp(player2.getHp()-1);
-            console("Hit!");
-            if(player2.getHp() == 0){//open 3rd if
-               win_Condition = true;
-               winner = "Player 1 has won!";
-            }//close 3rd if
-         }//close 2nd if
-         console("Miss!");
-         yourTurn = false;
-      }//close 1st if
-      else{
-         console("Shot taken at " + x + " " + y);
-         if(player1Field[x][y]){//open 1st if
-            hit = true;
-            player1.setHp(player1.getHp()-1);
-            console("Hit!");
-            if(player1.getHp() == 0){//open 2nd if
-               win_Condition = true;
-               winner = "Player 2 has won!";
-            }//close 2nd if
-         }//close 1st if
-         console("Miss!");
-         yourTurn = true;
-      }//close else
-   }//close hitDetection method
+   // public boolean hitDetection(int x, int y){//open hitDetection method
+//       if(yourTurn){//open 1st if
+//          console("Shot taken at " + x + " " + y);
+//          if(playerNum == 1) {
+//             if(player2Field[x][y]){//open 2nd if
+//                player2.setHp(player2.getHp()-1);
+//                console("Hit!");
+//                return true;
+//             }
+//             else {
+//                console("Miss!");
+//                return false;
+//             }
+//          }
+//          else {
+//             if(player1Field[x][y]){//open 2nd if
+//                player1.setHp(player1.getHp()-1);
+//                console("Hit!");
+//                return true;
+//             }
+//             else {
+//                console("Miss!");
+//                return false;
+//             }
+//          }
+//             if(player2.getHp() == 0){//open 3rd if
+//                win_Condition = true;
+//                winner = "Player 1 has won!";
+//             }//close 3rd if
+//          }//close 2nd if
+//          console("Miss!");
+//          yourTurn = false;
+//       }//close 1st if
+//       else{
+//          console("Shot taken at " + x + " " + y);
+//          if(player1Field[x][y]){//open 1st if
+//             hit = true;
+//             player1.setHp(player1.getHp()-1);
+//             console("Hit!");
+//             if(player1.getHp() == 0){//open 2nd if
+//                win_Condition = true;
+//                winner = "Player 2 has won!";
+//             }//close 2nd if
+//          }//close 1st if
+//          console("Miss!");
+//          yourTurn = true;
+//       }//close else
+//    }//close hitDetection method
    
    //If we don't thread it we can just use Player1.getHP() / Player2.getHP(), whichever player's current turn is going
    // if we thread it, we should be able to do Player.getHP() regardless.
