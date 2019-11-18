@@ -254,7 +254,11 @@ public class BattleshipClient extends JFrame implements ActionListener {
                      //we can add more ships at any time just lmk, I only did 4 cus I think one is the same size?
                   
                      if(selected == target){
-                        clear(target);
+                        if((enemyCoords[x][y].getBackground() != Color.RED)||(enemyCoords[x][y].getBackground() != Color.WHITE)){
+                        }
+                        else{
+                           clear(target);
+                        }
                         place(target);
                      }
                      else if(selected == carrier) {
@@ -337,12 +341,14 @@ public class BattleshipClient extends JFrame implements ActionListener {
             }
          }
          else if(selected == target){
-            if((enemyCoords[x][y].getBackground() != Color.RED)||(enemyCoords[x][y].getBackground() != Color.WHITE))
+         if((enemyCoords[x][y].getBackground() != Color.RED)||(enemyCoords[x][y].getBackground() != Color.WHITE)){
+         }
+         else{
             if(enemyCoords[x][y].occupied)
                enemyCoords[x][y].setBackground(occ);
             else
                enemyCoords[x][y].setBackground(vac);
-
+            }
          }//close else if
       }
       
