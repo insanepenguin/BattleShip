@@ -24,8 +24,8 @@ public class BattleshipClient extends JFrame implements ActionListener {
    BufferedReader bin;
    PrintWriter pout;
    String ipAddress;
-   ObjectInputStream ois;
-   boolean win = true;
+   int playerNum = 0;
+   boolean win = false;
    boolean yourTurn = false;
 
    //which ship the player is placing down, if they aren't in the placing phase it's null
@@ -72,7 +72,6 @@ public class BattleshipClient extends JFrame implements ActionListener {
 
    //what direction you want to place the ship in
    boolean rotate = false;
-   boolean shoot = false;
       
    //setting up the grid!
    public BattleshipClient() {
@@ -121,7 +120,6 @@ public class BattleshipClient extends JFrame implements ActionListener {
             jpEnemyGrid.add(enemyCoords[x][y]);
          }
       }
-
       
       //this is just taking care of GUI assembly, button setup component add etc.
       JPanel jpEast = new JPanel();
@@ -191,7 +189,9 @@ public class BattleshipClient extends JFrame implements ActionListener {
             System.err.println("something went wrong, failed to start game");
          }
       }
-      playing();
+      jlPlayer.setText("Ships locked! Ready for battle.");
+      jlEnemy.setText("Click this grid to fire!");
+      setActive();
    }//close constructor
    
    //here is the coordinate inner class! these guys do the heavy lifting
@@ -337,7 +337,7 @@ public class BattleshipClient extends JFrame implements ActionListener {
             }
          }
          else if(selected == target){
-         
+            if((enemyCoords[x][y].getBackground() != Color.RED)||(enemyCoords[x][y].getBackground() != Color.WHITE))
             if(enemyCoords[x][y].occupied)
                enemyCoords[x][y].setBackground(occ);
             else
@@ -410,11 +410,36 @@ public class BattleshipClient extends JFrame implements ActionListener {
          try 
          {//open try
             BufferedReader bin = new BufferedReader(new InputStreamReader(sock.getInputStream()));
+            String incoming = bin.readLine();
+            playerNum = Integer.parseInt(incoming.substring((incoming.indexOf(":")+1)));
+            System.out.println(playerNum);
             while(sock.isConnected()) 
             {//open while
                message = bin.readLine();
-               jtaChatBox.setText(jtaChatBox.getText() + "\n" + message);
-               ScrollBar.setValue((ScrollBar.getMaximum() + 5));
+               if(message.indexOf("[Player") != -1){
+                  jtaChatBox.setText(jtaChatBox.getText() + "\n" + message);
+                  ScrollBar.setValue((ScrollBar.getMaximum() + 5));
+               }
+               else{
+                  String[] gamestats = message.split(",");
+                  if(playerNum == Integer.parseInt(gamestats[0])){
+                     if(Boolean.parseBoolean(gamestats[1])){
+                        enemyCoords[Integer.parseInt(gamestats[2])][Integer.parseInt(gamestats[3])].setBackground(Color.RED);
+                        pout.println("[MSG]: \"" + "[Player " + playerNum + "] You hit at coordinates: X: " + (Integer.parseInt(gamestats[2])+1) + ", Y: " + (Integer.parseInt(gamestats[3])+1));
+                        pout.flush();
+                     }
+                     else{
+                        enemyCoords[Integer.parseInt(gamestats[2])][Integer.parseInt(gamestats[3])].setBackground(Color.WHITE);
+                        pout.println("[MSG]: \"" + "[Player " + playerNum + "] You missed at coordinates: X: " + (Integer.parseInt(gamestats[2])+1) + ", Y: " + (Integer.parseInt(gamestats[3])+1));
+                        pout.flush();
+                     }
+                  }
+                  else{
+                     jbFire.setEnabled(true);
+                     jbTarget.setEnabled(true);
+                     setActive();
+                  }                  
+               }
             }//close while
             bin.close();
          }//close try
@@ -458,7 +483,7 @@ public class BattleshipClient extends JFrame implements ActionListener {
       //Don't send anything, don't want blank messages sent
       }
       else{
-         pout.println(message);
+         pout.println("[MSG]: \"" +  message  + "\"");
          pout.flush();
          jtfInput.setText("");
       }
@@ -485,8 +510,6 @@ public class BattleshipClient extends JFrame implements ActionListener {
          ObjectOutputStream oos_ships = new ObjectOutputStream(s.getOutputStream());
          oos_ships.writeObject(ships);
          oos_ships.flush();
-         ObjectInputStream ois_ships = new ObjectInputStream(s.getInputStream());
-         win = ois_ships.readBoolean();
       }//close try
       catch(IOException ioe) {
          ioe.printStackTrace();
@@ -502,8 +525,13 @@ public class BattleshipClient extends JFrame implements ActionListener {
    //method to create the set of coordinates that would be sent as a ship object
    public void fire(){
       toShoot = new Ship("Target", 1, target[0].x, target[0].y, target[0].placedOrientation);
-      shoot = true;
+      pout.println(toShoot.getStartX() + "," + toShoot.getStartY()); //send String instead of toShoot object/Ship
+      pout.flush();
+      jbTarget.setEnabled(false);
+      jbFire.setEnabled(false);
+      setInactive();
       jtfInput.requestFocus();
+      //yourTurn = false;
    }//close fire method
    //ENDING OF THE METHODS FOR THE ACTION PERFORMED SECTION OF CODE
    
@@ -511,36 +539,22 @@ public class BattleshipClient extends JFrame implements ActionListener {
    //THIS WAS A QUICK AND SLOPPY ATTEMPT AT GAME LOGIC
    //IN ORDER TO TEST SENDING/RECEIVING FROM THE SERVER
    //CURRENTLY NOT BEING IMPLEMENTED
-   public void playing()
-   {//open Playing method
-      jlPlayer.setText("Ships locked! Ready for battle.");
-      jlEnemy.setText("Click this grid to fire!");
+   public void setActive(){//open setActive method
       for(int y = 0; y < coordinates.length; y++) {
          for(int x = 0; x < coordinates.length; x++) {
             coordinates[x][y].active = false;
             enemyCoords[x][y].active = true;
          }
       }
-      try
-      {//open try
-         //TODO loop
-         ObjectOutputStream oos_coords = new ObjectOutputStream(s.getOutputStream());
-         while(!win) {
-//             yourTurn = ois.readBoolean();
-            System.out.println(yourTurn);
-            if(shoot)
-            {//open if
-               oos_coords.writeObject(toShoot); //send String instead of toShoot object/Ship
-               oos_coords.flush();
-               shoot = false;
-            }//close if
-         }//close while
-      }//close try
-      catch(IOException ioe)
-      {//open 1st catch
-         ioe.printStackTrace();
-      }//close 2nd catch
-   }//close playing method
+   }//close setActive method
+    public void setInactive(){//open setInactive method
+      for(int y = 0; y < coordinates.length; y++) {
+         for(int x = 0; x < coordinates.length; x++) {
+            enemyCoords[x][y].active = false;
+         }
+      }
+   }//close setInactive method
+
    
    public static void main(String[] args) {
       new BattleshipClient();
