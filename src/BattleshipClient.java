@@ -24,7 +24,6 @@ public class BattleshipClient extends JFrame implements ActionListener {
    BufferedReader bin;
    PrintWriter pout;
    String ipAddress;
-   ObjectOutputStream oos;
    ObjectInputStream ois;
    boolean win = true;
    boolean yourTurn = false;
@@ -483,11 +482,11 @@ public class BattleshipClient extends JFrame implements ActionListener {
       //THIS IS AN ATTEMPT TO FIX AN ERROR FOR THE OIS/OOS STUFF, DOES NOT CURRENTLY WORK
       //THROWING AN EOF EXCEPTION!
       try {
-         oos = new ObjectOutputStream(s.getOutputStream());
-         oos.writeObject(ships);
-         oos.flush();
-         //ois = new ObjectInputStream(s.getInputStream());
-         //win = ois.readBoolean();
+         ObjectOutputStream oos_ships = new ObjectOutputStream(s.getOutputStream());
+         oos_ships.writeObject(ships);
+         oos_ships.flush();
+         ObjectInputStream ois_ships = new ObjectInputStream(s.getInputStream());
+         win = ois_ships.readBoolean();
       }//close try
       catch(IOException ioe) {
          ioe.printStackTrace();
@@ -525,13 +524,14 @@ public class BattleshipClient extends JFrame implements ActionListener {
       try
       {//open try
          //TODO loop
+         ObjectOutputStream oos_coords = new ObjectOutputStream(s.getOutputStream());
          while(!win) {
 //             yourTurn = ois.readBoolean();
             System.out.println(yourTurn);
             if(shoot)
             {//open if
-               oos.writeObject(toShoot); //send String instead of toShoot object/Ship
-               oos.flush();
+               oos_coords.writeObject(toShoot); //send String instead of toShoot object/Ship
+               oos_coords.flush();
                shoot = false;
             }//close if
          }//close while
