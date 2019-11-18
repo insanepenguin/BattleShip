@@ -341,14 +341,10 @@ public class BattleshipClient extends JFrame implements ActionListener {
             }
          }
          else if(selected == target){
-         if((enemyCoords[x][y].getBackground() != Color.RED)||(enemyCoords[x][y].getBackground() != Color.WHITE)){
-         }
-         else{
             if(enemyCoords[x][y].occupied)
                enemyCoords[x][y].setBackground(occ);
             else
                enemyCoords[x][y].setBackground(vac);
-            }
          }//close else if
       }
       
