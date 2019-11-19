@@ -25,8 +25,8 @@ import java.awt.event.*;
 public class BattleshipServer
 {//open class
    Boolean win_Condition = false;
-   int player1Hp = 17;
-   int player2Hp = 17;
+   int player1Hp = 2;
+   int player2Hp = 2;
    Boolean[][] player1Field = new Boolean[10][10];
    Boolean[][] player2Field = new Boolean[10][10];
    Boolean yourTurn = true;
@@ -277,9 +277,12 @@ public class BattleshipServer
             if(player2Field[x][y]){//open 2nd if
                console("Hit!");
                player2Hp--;
+               System.out.println("Player 2 hp is: " + player2Hp);
                if(player2Hp == 0) {
+                  System.out.println("Player 1 has won");
                   synchronized(sync) {
                      currentMsg = "[WIN]Player 1 wins!";
+                     System.out.println("Sending currentMsg");
                      sync.notifyAll();
                   }
                }
@@ -294,9 +297,11 @@ public class BattleshipServer
             if(player1Field[x][y]){//open 2nd if
                console("Hit!");
                player1Hp--;
-               synchronized(sync) {
-                  currentMsg = "[WIN]Player 2 wins!";
-                  sync.notifyAll();
+               if(player1Hp == 0){
+                  synchronized(sync) {
+                     currentMsg = "[WIN]Player 2 wins!";
+                     sync.notifyAll();
+                  }
                }
                return true;
             }
