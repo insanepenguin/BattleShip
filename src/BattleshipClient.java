@@ -413,7 +413,7 @@ public class BattleshipClient extends JFrame implements ActionListener {
          {//open try
             BufferedReader bin = new BufferedReader(new InputStreamReader(sock.getInputStream()));
             String incoming = bin.readLine();
-            playerNum = Integer.parseInt(incoming.substring((incoming.indexOf(":")+1)));
+            playerNum = Integer.parseInt(incoming);
             System.out.println(playerNum);
             while(sock.isConnected()) 
             {//open while
@@ -427,16 +427,22 @@ public class BattleshipClient extends JFrame implements ActionListener {
                   if(playerNum == Integer.parseInt(gamestats[0])){
                      if(Boolean.parseBoolean(gamestats[1])){
                         enemyCoords[Integer.parseInt(gamestats[2])][Integer.parseInt(gamestats[3])].setBackground(Color.RED);
-                        pout.println("[MSG]: \"" + "[Player " + playerNum + "] You hit at coordinates: X: " + (Integer.parseInt(gamestats[2])+1) + ", Y: " + (Integer.parseInt(gamestats[3])+1));
+                        pout.println("[MSG]: hit at coordinates: X: " + (Integer.parseInt(gamestats[2])+1) + ", Y: " + (Integer.parseInt(gamestats[3])+1));
                         pout.flush();
                      }
                      else{
                         enemyCoords[Integer.parseInt(gamestats[2])][Integer.parseInt(gamestats[3])].setBackground(Color.WHITE);
-                        pout.println("[MSG]: \"" + "[Player " + playerNum + "] You missed at coordinates: X: " + (Integer.parseInt(gamestats[2])+1) + ", Y: " + (Integer.parseInt(gamestats[3])+1));
+                        pout.println("[MSG]: missed at coordinates: X: " + (Integer.parseInt(gamestats[2])+1) + ", Y: " + (Integer.parseInt(gamestats[3])+1));
                         pout.flush();
                      }
                   }
                   else{
+                     if(Boolean.parseBoolean(gamestats[1])){
+                        coordinates[Integer.parseInt(gamestats[2])][Integer.parseInt(gamestats[3])].setBackground(Color.RED);
+                     }
+                     else{
+                        coordinates[Integer.parseInt(gamestats[2])][Integer.parseInt(gamestats[3])].setBackground(Color.WHITE);
+                     }
                      jbFire.setEnabled(true);
                      jbTarget.setEnabled(true);
                      setActive();
@@ -529,6 +535,7 @@ public class BattleshipClient extends JFrame implements ActionListener {
       toShoot = new Ship("Target", 1, target[0].x, target[0].y, target[0].placedOrientation);
       pout.println(toShoot.getStartX() + "," + toShoot.getStartY()); //send String instead of toShoot object/Ship
       pout.flush();
+      target[0].occupied = true;
       jbTarget.setEnabled(false);
       jbFire.setEnabled(false);
       setInactive();
@@ -545,7 +552,7 @@ public class BattleshipClient extends JFrame implements ActionListener {
       for(int y = 0; y < coordinates.length; y++) {
          for(int x = 0; x < coordinates.length; x++) {
             coordinates[x][y].active = false;
-            enemyCoords[x][y].active = true;
+            if(!enemyCoords[x][y].occupied) enemyCoords[x][y].active = true;
          }
       }
    }//close setActive method
