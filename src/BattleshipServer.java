@@ -96,16 +96,16 @@ public class BattleshipServer
       console("Both players connected"); 
       
       //waiting for the players to send their ships 
-      for(int i = 0; i < 2; i++) {
-         try {
-            playersReady[i].join();
-            new Connection(sockets[i], i).start();
-         }
-         catch(InterruptedException ie) {
-            ie.printStackTrace();
-         }
+      try {
+         playersReady[0].join();
+         playersReady[1].join();
+         new Connection(sockets[0], 1).start();
+         new Connection(sockets[1], 2).start();
       }
-
+      catch(InterruptedException ie) {
+         ie.printStackTrace();
+      }
+      
       console("Ships recieved, starting game");
       System.out.println("Ships recieved, starting game");
       
@@ -239,7 +239,7 @@ public class BattleshipServer
      int playerNum;
      
       public Connection(Socket _cs, int _playerNum) {
-         playerNum = _playerNum + 1;
+         playerNum = _playerNum;
          sock = _cs;
          setName("[Connection " + playerNum + "]");
       }
@@ -249,7 +249,7 @@ public class BattleshipServer
          new Reciever().start();
          try {
             PrintWriter chatWriter = new PrintWriter(new OutputStreamWriter(sock.getOutputStream()));
-            chatWriter.println("[NUMBER]:" + playerNum);
+            chatWriter.println(playerNum);
             chatWriter.flush();
             // int playerNum = integer.parseInt(incoming.substring(incoming.indexOf(":")));
             console(getName() + "initialized");
@@ -315,7 +315,7 @@ public class BattleshipServer
                      console(incoming);
                      if(incoming.indexOf("[MSG]:") != -1) {
                         synchronized(sync) {
-                           currentMsg = "[Player " + playerNum + "]: " + incoming;
+                           currentMsg = "[Player " + playerNum + "]: " + incoming.substring(7);
                            sync.notifyAll();
                         }
                      }
