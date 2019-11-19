@@ -414,7 +414,6 @@ public class BattleshipClient extends JFrame implements ActionListener {
             BufferedReader bin = new BufferedReader(new InputStreamReader(sock.getInputStream()));
             String incoming = bin.readLine();
             playerNum = Integer.parseInt(incoming);
-            System.out.println(playerNum);
             while(sock.isConnected()) 
             {//open while
                message = bin.readLine();
@@ -424,19 +423,24 @@ public class BattleshipClient extends JFrame implements ActionListener {
                }
                else if(message.substring(0, 5).equals("[WIN]")) {
                   System.out.println(message.substring(13, 14));
+                  System.out.println("DID THIS WORK?");
+                  ScrollBar.setValue((ScrollBar.getMaximum() + 5));
                }
                else{
+               System.out.println(message.substring(0,5));
                   String[] gamestats = message.split(",");
                   if(playerNum == Integer.parseInt(gamestats[0])){
                      if(Boolean.parseBoolean(gamestats[1])){
                         enemyCoords[Integer.parseInt(gamestats[2])][Integer.parseInt(gamestats[3])].setBackground(Color.RED);
                         pout.println("[MSG]: hit at coordinates: X: " + (Integer.parseInt(gamestats[2])+1) + ", Y: " + (Integer.parseInt(gamestats[3])+1));
                         pout.flush();
+                        ScrollBar.setValue((ScrollBar.getMaximum() + 5));
                      }
                      else{
                         enemyCoords[Integer.parseInt(gamestats[2])][Integer.parseInt(gamestats[3])].setBackground(Color.WHITE);
                         pout.println("[MSG]: missed at coordinates: X: " + (Integer.parseInt(gamestats[2])+1) + ", Y: " + (Integer.parseInt(gamestats[3])+1));
                         pout.flush();
+                        ScrollBar.setValue((ScrollBar.getMaximum() + 5));
                      }
                   }
                   else{
