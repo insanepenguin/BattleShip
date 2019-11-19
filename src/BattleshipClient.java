@@ -422,6 +422,9 @@ public class BattleshipClient extends JFrame implements ActionListener {
                   jtaChatBox.setText(jtaChatBox.getText() + "\n" + message);
                   ScrollBar.setValue((ScrollBar.getMaximum() + 5));
                }
+               else if(message.substring(0, 5).equals("[WIN]")) {
+                  System.out.println(message.substring(13, 14));
+               }
                else{
                   String[] gamestats = message.split(",");
                   if(playerNum == Integer.parseInt(gamestats[0])){
