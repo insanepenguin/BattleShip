@@ -4,17 +4,17 @@ import java.io.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+//SERVER
 
 public class BattleshipServer
 {//open class
    Boolean win_Condition = false;
-   int player1Hp = 2;
-   int player2Hp = 2;
+   int player1Hp = 17;
+   int player2Hp = 17;
    Boolean[][] player1Field = new Boolean[10][10];
    Boolean[][] player2Field = new Boolean[10][10];
    Boolean yourTurn = true;
    Boolean hit = false;
-   String winner;
    String sync = new String("");
    String currentMsg = ""; // this string is for the chat messages sent out to the clients
    
@@ -26,12 +26,16 @@ public class BattleshipServer
    private JTextArea jtaDiagnostics = new JTextArea(20,35);
    private JScrollPane jspScroller = new JScrollPane(jtaDiagnostics, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
    private JScrollBar ScrollBar = jspScroller.getVerticalScrollBar();
-   private JPanel jpCenter = new JPanel(); 
+   private JPanel jpCenter = new JPanel();
 
    //may need to take in Player1 and Player2??
    BattleshipServer(/* Maybe take an Array of Coordinates for the ships? or an Array of Ships if ships implemented properly*/)
    {//open constructor
-
+         
+      //This should build a new version of the Grid from Grid, for each player!
+      //This will deal with hit-handling, saving grids, HP, running the game
+      //method for running game (Do-While)
+   
       //SET THE BOOLEAN FIELDS TO FALSE FOR BOTH PLAY FIELDS!
       for(int y = 0; y < 10; y++)
       {//open 1st for
@@ -40,13 +44,13 @@ public class BattleshipServer
             player1Field[y][z] = false;
             player2Field[y][z] = false;
          }//close 2nd for
-      }//close 1st for           
+      }//close 1st for          
 
       jfServerFrame.setLayout(new BorderLayout(5,10));
       jtaDiagnostics.setEnabled(false);
       jpCenter.add(jspScroller);
       jfServerFrame.add(jpCenter, BorderLayout.CENTER);
-      
+     
       jfServerFrame.setTitle("Battleship Server by JavaPack Survivors");
       jfServerFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
       jfServerFrame.setLocationRelativeTo(null);
@@ -72,19 +76,21 @@ public class BattleshipServer
       {//open catch
          ioe.printStackTrace();
       }//close catch
-      console("Both players connected"); 
-      
-      //waiting for the players to send their ships 
+      console("Both players connected");
+     
+      int goesFirst = (int)((Math.random() * 2) + 1);
+     
+      //waiting for the players to send their ships
       try {
          playersReady[0].join();
          playersReady[1].join();
-         new Connection(sockets[0], 1).start();
-         new Connection(sockets[1], 2).start();
+         new Connection(sockets[0], 1, goesFirst).start();
+         new Connection(sockets[1], 2, goesFirst).start();
       }
       catch(InterruptedException ie) {
          ie.printStackTrace();
       }
-      
+     
       console("Ships recieved, starting game");
       System.out.println("Ships recieved, starting game");
 
@@ -99,16 +105,16 @@ public class BattleshipServer
    public class ShipReceiver extends Thread {
       Socket sock;
       int player;
-      
+     
       public ShipReceiver(Socket cs, int i) {
          cs = sock;
          player = i;
       }
-      
+     
       public Socket getSock() {
          return sock;
       }
-      
+     
       public void run() {
          try
          {//open try
@@ -171,16 +177,18 @@ public class BattleshipServer
    
    //connection inner class, this handles everything chat related
    public class Connection extends Thread {
-    
+   
      Socket sock;
      int playerNum;
+     int first;
      
-      public Connection(Socket _cs, int _playerNum) {
+      public Connection(Socket _cs, int _playerNum, int _first) {
          playerNum = _playerNum;
          sock = _cs;
+         first = _first;
          setName("[Connection " + playerNum + "]");
       }
-      
+     
       public void run() {
          //starts the reciever, then handles sending of chat data
          new Reciever().start();
@@ -188,6 +196,9 @@ public class BattleshipServer
             PrintWriter chatWriter = new PrintWriter(new OutputStreamWriter(sock.getOutputStream()));
             chatWriter.println(playerNum);
             chatWriter.flush();
+            chatWriter.println(first);
+            chatWriter.flush();
+            // int playerNum = integer.parseInt(incoming.substring(incoming.indexOf(":")));
             console(getName() + "initialized");
             while(sock.isConnected()) {
                synchronized(sync) {
@@ -207,21 +218,12 @@ public class BattleshipServer
             ioe.printStackTrace();
          }
       }
-      
+     
       public boolean hitDetection(int x, int y){//open hitDetection method
          if(playerNum == 1) {
             if(player2Field[x][y]){//open 2nd if
                console("Hit!");
                player2Hp--;
-               System.out.println("Player 2 hp is: " + player2Hp);
-               if(player2Hp == 0) {
-                  System.out.println("Player 1 has won");
-                  synchronized(sync) {
-                     currentMsg = "[WIN]Player 1 wins!";
-                     System.out.println("Sending currentMsg");
-                     sync.notifyAll();
-                  }
-               }
                return true;
             }
             else {
@@ -233,12 +235,6 @@ public class BattleshipServer
             if(player1Field[x][y]){//open 2nd if
                console("Hit!");
                player1Hp--;
-               if(player1Hp == 0){
-                  synchronized(sync) {
-                     currentMsg = "[WIN]Player 2 wins!";
-                     sync.notifyAll();
-                  }
-               }
                return true;
             }
             else {
@@ -247,10 +243,11 @@ public class BattleshipServer
             }
          }
       }
-      
+     
       //inner class controlling the thread that recieves chat data
       public class Reciever extends Thread {
-      
+         String winner;
+         
          public Reciever() {
             setName("[Reciever " + playerNum + "]");
          }
@@ -259,6 +256,7 @@ public class BattleshipServer
             try {
                BufferedReader chatReader = new BufferedReader(new InputStreamReader(sock.getInputStream()));
                console(getName() + "initialized");
+
                   while(sock.isConnected()) {
                      String incoming = chatReader.readLine();
                      console(incoming);
@@ -271,12 +269,24 @@ public class BattleshipServer
                      else {
                      String[] Coords = incoming.split(",");
                      int xCoord = Integer.parseInt(Coords[0]);
-                     int yCoord = Integer.parseInt(Coords[1]);                     
+                     int yCoord = Integer.parseInt(Coords[1]);                    
                      boolean hitMiss = hitDetection(xCoord, yCoord);
                      
                      synchronized(sync) {
                         currentMsg = playerNum + "," + hitMiss + "," + xCoord + "," + yCoord;
                         sync.notifyAll();
+                     }
+                     if(player1Hp == 0 || player2Hp == 0) {
+                        if(player1Hp ==0) {
+                           winner = "[WIN]Player 2 wins!";
+                        }
+                        else {
+                           winner = "[WIN]Player 1 wins!";
+                        }
+                        synchronized(sync) {
+                           currentMsg = winner;
+                           sync.notifyAll();
+                        }
                      }
                   }
                }
@@ -288,7 +298,7 @@ public class BattleshipServer
          }
       }
    }
-
+   
    public static void main(String[] args)
    {//open main
       new BattleshipServer();
