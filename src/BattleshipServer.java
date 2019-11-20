@@ -4,23 +4,6 @@ import java.io.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-//SERVER
-
-//SERVER RECIEVES ARRAY OF SHIPS
-
-//SERVER BUILDS THE GRID
-//play game method, once both players are built sleep (short period of time)
-//game starts (do-while, while(win-condition: false) -> make it a thread?
-//take turn methods? (2 ints that are pushed into the method -> shots coordinates)
-//player1 take turn? player2 take turn? 
-//on win-condition we break out, send health pools back into the client.
-//Currently NO TURNS
-
-//WHEREVER THERE IS A SHIP IT WILL PLACE A TRUE, EVERYWHERE ELSE WILL BE FALSE
-
-//server waits until it gets both array, builds them in the order they come in
-
-//wait for turns, after they hit the ready (Message back from server confirmation that the game is starting/grid was valid)
 
 public class BattleshipServer
 {//open class
@@ -48,11 +31,7 @@ public class BattleshipServer
    //may need to take in Player1 and Player2??
    BattleshipServer(/* Maybe take an Array of Coordinates for the ships? or an Array of Ships if ships implemented properly*/)
    {//open constructor
-          
-      //This should build a new version of the Grid from Grid, for each player!
-      //This will deal with hit-handling, saving grids, HP, running the game
-      //method for running game (Do-While)
-   
+
       //SET THE BOOLEAN FIELDS TO FALSE FOR BOTH PLAY FIELDS!
       for(int y = 0; y < 10; y++)
       {//open 1st for
@@ -108,49 +87,7 @@ public class BattleshipServer
       
       console("Ships recieved, starting game");
       System.out.println("Ships recieved, starting game");
-      
-      /*AFTER THIS POINT IS THE GAME LOGIC, IN ORDER
-      THIS IS A VERY IMPORTANT BLOCK OF CODE.
-      THIS IS WHERE THE LOGIC OF THE GAME IS ACTUALLY HAPPENING
-      PAY ATTENTION HERE!
-      THIS IS ALL THE NEW STUFF (plus hitDetection Method)*/
-      // try{//open try  
-//          ObjectInputStream turnReader = new ObjectInputStream(cs.getInputStream());
-//          ObjectOutputStream turnWriter = new ObjectOutputStream(cs.getOutputStream());
-// //          turnWriter.writeBoolean(win_Condition);
-//          System.out.println("writing Win Condition");
-//          while(!win_Condition){//open while loop
-//             // turnWriter.writeBoolean(yourTurn);
-//             System.out.println("Test");
-//             String inCoords = turnReader.readUTF();
-//             String[] Coords = inCoords.split(", ");
-//             int xCoord = Integer.parseInt(Coords[0]);
-//             int yCoord = Integer.parseInt(Coords[1]);
-//             console("Coordinates to shoot are " + xCoord + " and " + yCoord);
-//             hitDetection(xCoord, yCoord);
-//             // turnWriter.writeBoolean(win_Condition);
-//             // turnWriter.flush();
-//          }//close while loop
-//          // turnWriter.writeUTF(winner);
-//          // turnWriter.flush()
-//       }//close try
-//       catch(IOException ioe){//open catch
-//          ioe.printStackTrace();
-//       }//close catch
-//       
-//       int startingHP = 0;
-//       for(Boolean[] x : player1Field){
-//          for (boolean y : x){
-//             if(y){
-//                startingHP++;
-//             }
-//          }
-//       }
-//       //TODO:Add player instantiations and start the game
-//       player1 = new Player(player1Field,startingHP);
-//       player2 = new Player(player2Field,startingHP);
-//       Game(player1,player2);
-      
+
    }//close constructor
    
    //a method so we don't have to be like "jtaDiagnostics.setText(jtaDiagnostics.getText() + '\n' + w/e) every time lol
@@ -251,7 +188,6 @@ public class BattleshipServer
             PrintWriter chatWriter = new PrintWriter(new OutputStreamWriter(sock.getOutputStream()));
             chatWriter.println(playerNum);
             chatWriter.flush();
-            // int playerNum = integer.parseInt(incoming.substring(incoming.indexOf(":")));
             console(getName() + "initialized");
             while(sock.isConnected()) {
                synchronized(sync) {
@@ -323,10 +259,6 @@ public class BattleshipServer
             try {
                BufferedReader chatReader = new BufferedReader(new InputStreamReader(sock.getInputStream()));
                console(getName() + "initialized");
-//                synchronized(sync) {
-//                   currentMsg = "Player connected @" + sock.getInetAddress();
-//                   sync.notifyAll();
-//                }
                   while(sock.isConnected()) {
                      String incoming = chatReader.readLine();
                      console(incoming);
@@ -342,7 +274,6 @@ public class BattleshipServer
                      int yCoord = Integer.parseInt(Coords[1]);                     
                      boolean hitMiss = hitDetection(xCoord, yCoord);
                      
-                     
                      synchronized(sync) {
                         currentMsg = playerNum + "," + hitMiss + "," + xCoord + "," + yCoord;
                         sync.notifyAll();
@@ -357,87 +288,7 @@ public class BattleshipServer
          }
       }
    }
-   
-   // public void Game(Player p1,Player p2) {
-//    //Wait for both players to pass in cords and then play the turn
-// 
-//       while(!win_Condition){
-//          //Wait for the cords to be sent
-//          //Needs 4 ints 2xs and 2ys one pair form each player.
-//          synchronized (sync){
-//             try {
-//                sync.wait();
-//             } 
-//             catch (InterruptedException e) {
-//                e.printStackTrace();
-//             }
-//          }
-//          int p1T= p1.turn(0,0);//Retruns a number to help send msg to ppl
-//          int p2T= p2.turn(0,0);
-//          // System.out.println(p1T+"||"+p2T);
-//          if( player1.isWinner() || player2.isWinner()){
-//             win_Condition = true;
-//          }//close if
-//       }//close while
-//    }//close game method
 
-   //This is the code that will handle if something is hit
-   // public boolean hitDetection(int x, int y){//open hitDetection method
-//       if(yourTurn){//open 1st if
-//          console("Shot taken at " + x + " " + y);
-//          if(playerNum == 1) {
-//             if(player2Field[x][y]){//open 2nd if
-//                player2.setHp(player2.getHp()-1);
-//                console("Hit!");
-//                return true;
-//             }
-//             else {
-//                console("Miss!");
-//                return false;
-//             }
-//          }
-//          else {
-//             if(player1Field[x][y]){//open 2nd if
-//                player1.setHp(player1.getHp()-1);
-//                console("Hit!");
-//                return true;
-//             }
-//             else {
-//                console("Miss!");
-//                return false;
-//             }
-//          }
-//             if(player2.getHp() == 0){//open 3rd if
-//                win_Condition = true;
-//                winner = "Player 1 has won!";
-//             }//close 3rd if
-//          }//close 2nd if
-//          console("Miss!");
-//          yourTurn = false;
-//       }//close 1st if
-//       else{
-//          console("Shot taken at " + x + " " + y);
-//          if(player1Field[x][y]){//open 1st if
-//             hit = true;
-//             player1.setHp(player1.getHp()-1);
-//             console("Hit!");
-//             if(player1.getHp() == 0){//open 2nd if
-//                win_Condition = true;
-//                winner = "Player 2 has won!";
-//             }//close 2nd if
-//          }//close 1st if
-//          console("Miss!");
-//          yourTurn = true;
-//       }//close else
-//    }//close hitDetection method
-   
-   //If we don't thread it we can just use Player1.getHP() / Player2.getHP(), whichever player's current turn is going
-   // if we thread it, we should be able to do Player.getHP() regardless.
-   //Method? or just Check at start of each turn?
-   //if Player.getHP() == 0
-   //    win_Condition = true;
-   //else
-   //    
    public static void main(String[] args)
    {//open main
       new BattleshipServer();
