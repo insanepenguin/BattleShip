@@ -112,7 +112,6 @@ public class BattleshipClient extends JFrame implements ActionListener {
          }
       }
       
-      
       jpEnemyGrid = new JPanel(new GridLayout(0,10));
       for(int y = 0; y < 10; y++) {
          for(int x = 0; x < 10; x++) {
@@ -247,11 +246,6 @@ public class BattleshipClient extends JFrame implements ActionListener {
             public void mousePressed(MouseEvent me) {
                if(active) {
                   try {
-                  
-                     //if it managed to get this far without throwing an exception, time to place the ship!
-                     //it checks what ship we're placing, then deletes any old one and places a new one
-                     //this is so that you can't have a fleet of like 5 aircraft carriers or smth
-                     //we can add more ships at any time just lmk, I only did 4 cus I think one is the same size?
                   
                      if(selected == target){
                         if((enemyCoords[x][y].getBackground() != Color.RED)||(enemyCoords[x][y].getBackground() != Color.WHITE)){
@@ -484,7 +478,6 @@ public class BattleshipClient extends JFrame implements ActionListener {
       else if(pressedButton == jbFire) fire();
    }
    
-   // BEGINNING OF METHODS FOR THE ACTION PERFORMED SECTION OF CODE!
    //method to change the orientation of the ships being placed
    public void rotate(){
       if (rotate == true) rotate = false;
@@ -519,8 +512,6 @@ public class BattleshipClient extends JFrame implements ActionListener {
       ships[3] = new Ship("Submarine", 3, submarine[0].x, submarine[0].y, submarine[0].placedOrientation);
       ships[4] = new Ship("Patrol Boat", 2, patrolBoat[0].x, patrolBoat[0].y, patrolBoat[0].placedOrientation);
       
-      //THIS IS AN ATTEMPT TO FIX AN ERROR FOR THE OIS/OOS STUFF, DOES NOT CURRENTLY WORK
-      //THROWING AN EOF EXCEPTION!
       try {
          ObjectOutputStream oos_ships = new ObjectOutputStream(s.getOutputStream());
          oos_ships.writeObject(ships);
@@ -549,12 +540,7 @@ public class BattleshipClient extends JFrame implements ActionListener {
       jtfInput.requestFocus();
       //yourTurn = false;
    }//close fire method
-   //ENDING OF THE METHODS FOR THE ACTION PERFORMED SECTION OF CODE
-   
-   //THIS IS CURRENTLY A REPEAT SECTION OF CODE!
-   //THIS WAS A QUICK AND SLOPPY ATTEMPT AT GAME LOGIC
-   //IN ORDER TO TEST SENDING/RECEIVING FROM THE SERVER
-   //CURRENTLY NOT BEING IMPLEMENTED
+
    public void setActive(){//open setActive method
       for(int y = 0; y < coordinates.length; y++) {
          for(int x = 0; x < coordinates.length; x++) {
@@ -570,7 +556,6 @@ public class BattleshipClient extends JFrame implements ActionListener {
          }
       }
    }//close setInactive method
-
    
    public static void main(String[] args) {
       new BattleshipClient();
