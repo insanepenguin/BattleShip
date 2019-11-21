@@ -1,28 +1,33 @@
 import java.lang.reflect.Array;
 
 public class Player {
-    boolean winner;
+    boolean winner = false;
+    boolean loser = false;
     int hp = 0;
-    boolean[][] grid = new boolean[10][10];
+    Boolean[][] grid = new Boolean[10][10];
+    String name = "0";
 
-    public Player(boolean[][] _grid, int _hp) {
+
+
+    public Player(Boolean[][] _grid, int _hp, String _name) {
         grid = _grid;
         hp = _hp;
+        name = _name;
     }
 
-    public int turn(int x,int y){
-        if(hit(x,y)){
+    public boolean turn(int x,int y){
+        if(grid[x][y]){
             hp--;
             if (hp == 0){
-                winner = false;
-                return 0;
+                loser = true;
+                return false;
             }
-            return 0;
+            return false;
         }
-        return 1;
+        return true;
     }
-    public boolean hit(int x, int y){
-        return grid[x][y];
+    public String getName() {
+        return name;
     }
 
     public boolean isWinner() {
@@ -41,11 +46,11 @@ public class Player {
         this.hp = hp;
     }
 
-    public boolean[][] getGrid() {
+    public Boolean[][] getGrid() {
         return grid;
     }
 
-    public void setGrid(boolean[][] grid) {
+    public void setGrid(Boolean[][] grid) {
         this.grid = grid;
     }
 }
