@@ -249,11 +249,8 @@ public class BattleshipClient extends JFrame implements ActionListener {
             public void mousePressed(MouseEvent me) {
                if(active) {
                   try {
-                  
                      if(selected == target){
                         if((enemyCoords[x][y].getBackground() != Color.RED)||(enemyCoords[x][y].getBackground() != Color.WHITE)){
-                        }
-                        else{
                            clear(target);
                         }
                         place(target);
@@ -546,8 +543,8 @@ public class BattleshipClient extends JFrame implements ActionListener {
       pout.flush();
       target[0].occupied = true;
       setInactive();
+      target[0] = null;
       jtfInput.requestFocus();
-      //yourTurn = false;
    }//close fire method
 
    public void setActive(){//open setActive method
@@ -556,10 +553,11 @@ public class BattleshipClient extends JFrame implements ActionListener {
             coordinates[x][y].active = false;
             if(!enemyCoords[x][y].occupied) enemyCoords[x][y].active = true;
          }
-         jbFire.setEnabled(true);
-         jbTarget.setEnabled(true);
-      }
+      jbFire.setEnabled(true);
+      jbTarget.setEnabled(true);
    }//close setActive method
+      
+   }//close setInactive method
     public void setInactive(){//open setInactive method
       for(int y = 0; y < coordinates.length; y++) {
          for(int x = 0; x < coordinates.length; x++) {

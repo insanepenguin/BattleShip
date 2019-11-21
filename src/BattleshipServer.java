@@ -223,6 +223,7 @@ public class BattleshipServer
          if(playerNum == 1) {
             if(player2Field[x][y]){//open 2nd if
                console("Hit!");
+               player2Field[x][y] = false;
                player2Hp--;
                return true;
             }
@@ -234,6 +235,7 @@ public class BattleshipServer
          else {
             if(player1Field[x][y]){//open 2nd if
                console("Hit!");
+               player1Field[x][y] = false;
                player1Hp--;
                return true;
             }
