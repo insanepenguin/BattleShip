@@ -3,15 +3,15 @@ import java.lang.reflect.Array;
 public class Player {
     boolean winner;
     int hp = 0;
-    boolean[][] grid = new boolean[10][10];
+    Boolean[][] grid = new Boolean[10][10];
 
-    public Player(boolean[][] _grid, int _hp) {
+    public Player(Boolean[][] _grid, int _hp) {
         grid = _grid;
         hp = _hp;
     }
 
     public int turn(int x,int y){
-        if(hit(x,y)){
+        if(grid[x][y]){
             hp--;
             if (hp == 0){
                 winner = false;
@@ -20,9 +20,6 @@ public class Player {
             return 0;
         }
         return 1;
-    }
-    public boolean hit(int x, int y){
-        return grid[x][y];
     }
 
     public boolean isWinner() {
@@ -41,11 +38,11 @@ public class Player {
         this.hp = hp;
     }
 
-    public boolean[][] getGrid() {
+    public Boolean[][] getGrid() {
         return grid;
     }
 
-    public void setGrid(boolean[][] grid) {
+    public void setGrid(Boolean[][] grid) {
         this.grid = grid;
     }
 }

@@ -24,9 +24,8 @@ public class BattleshipClient extends JFrame implements ActionListener {
    BufferedReader bin;
    PrintWriter pout;
    String ipAddress;
-   ObjectOutputStream oos;
-   ObjectInputStream ois;
-   boolean win = true;
+   int playerNum = 0;
+   boolean win = false;
    boolean yourTurn = false;
 
    //which ship the player is placing down, if they aren't in the placing phase it's null
@@ -50,7 +49,9 @@ public class BattleshipClient extends JFrame implements ActionListener {
    private JLabel jlPlayer = new JLabel("Click each ship and place them here!", SwingConstants.CENTER);
    private JLabel jlEnemy = new JLabel("Enemy's grid; ignore this for now.", SwingConstants.CENTER);
    private JPanel jpShips = new JPanel(new GridLayout(0, 1));
-   private JPanel jpFireControl = new JPanel(new GridLayout(0, 1));
+   private JPanel jpGameRunning = new JPanel(new BorderLayout());
+   private JPanel jpGameRunningCenter = new JPanel();
+   private JPanel jpGameRunningSouth = new JPanel();
    private JPanel jpEnemyGrid;
    private JButton jbCarrier = new JButton("Carrier");
    private JButton jbCruiser = new JButton("Cruiser");
@@ -62,9 +63,15 @@ public class BattleshipClient extends JFrame implements ActionListener {
    private JButton jbTarget = new JButton("Target");
    private JButton jbFire = new JButton("Fire");
    
+   //Chat Gui stuff
+   private JTextArea jtaChatBox = new JTextArea(25,17);
+   private JScrollPane jspScroller = new JScrollPane(jtaChatBox, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+   private JScrollBar ScrollBar = jspScroller.getVerticalScrollBar();
+   private JTextField jtfInput = new JTextField(8);
+   private JButton jbSend = new JButton("Send");
+
    //what direction you want to place the ship in
    boolean rotate = false;
-   boolean shoot = false;
       
    //setting up the grid!
    public BattleshipClient() {
@@ -85,7 +92,7 @@ public class BattleshipClient extends JFrame implements ActionListener {
                throw new IOException();
             }//close
             s = new Socket(ipAddress, 16789);
-            //new Recieve(s).start();     DONT CURRENTLY NEED RECIEVER
+            //new Receive(s).start();     DONT CURRENTLY NEED RECIEVER
          }//close try
          catch(IOException ioe) 
          {//open 1st catch
@@ -105,7 +112,6 @@ public class BattleshipClient extends JFrame implements ActionListener {
          }
       }
       
-      
       jpEnemyGrid = new JPanel(new GridLayout(0,10));
       for(int y = 0; y < 10; y++) {
          for(int x = 0; x < 10; x++) {
@@ -113,7 +119,6 @@ public class BattleshipClient extends JFrame implements ActionListener {
             jpEnemyGrid.add(enemyCoords[x][y]);
          }
       }
-
       
       //this is just taking care of GUI assembly, button setup component add etc.
       JPanel jpEast = new JPanel();
@@ -135,6 +140,7 @@ public class BattleshipClient extends JFrame implements ActionListener {
       jbReady.addActionListener(this);
       jbTarget.addActionListener(this);
       jbFire.addActionListener(this);
+      jbSend.addActionListener(this);
       jbReady.setEnabled(false);
       jpShips.add(jbCarrier);
       jpShips.add(jbCruiser);
@@ -143,15 +149,33 @@ public class BattleshipClient extends JFrame implements ActionListener {
       jpShips.add(jbPatrolBoat);
       jpShips.add(jbRotate);
       jpShips.add(jbReady);
-      jpFireControl.add(new JLabel("Fire controls or chat? idk")); //this is just a placeholder lol
-      jpFireControl.add(jbTarget);
-      jpFireControl.add(jbFire);
+      jpGameRunning.add(jspScroller, BorderLayout.NORTH); 
+      jpGameRunningCenter.add(new JLabel("Chat Input:"));
+      jpGameRunningCenter.add(jtfInput);
+      jtfInput.setEnabled(false); 
+      jpGameRunningCenter.add(jbSend);
+      jbSend.setEnabled(false);
+      jpGameRunningSouth.add(jbTarget);
+      jbTarget.setEnabled(false);
+      jpGameRunningSouth.add(jbFire);
+      jbFire.setEnabled(false);
+      jpGameRunning.add(jpGameRunningCenter, BorderLayout.CENTER);
+      jpGameRunning.add(jpGameRunningSouth, BorderLayout.SOUTH);
       JPanel jpCenter = new JPanel();
-      jpShips.setPreferredSize(new Dimension(200, 500));
-      jpFireControl.setVisible(false);
-      jpCenter.add(jpFireControl, BorderLayout.CENTER);
+      jpShips.setPreferredSize(new Dimension(250, 500));
+      jpGameRunning.setVisible(false);
+      jpCenter.add(jpGameRunning, BorderLayout.CENTER);
       jpCenter.add(jpShips, BorderLayout.CENTER);
       add(jpCenter, BorderLayout.CENTER);
+      
+      //make Enter press the "jbSend" button
+      getRootPane().setDefaultButton(jbSend);
+      
+      //make the text area un-editable
+      jtaChatBox.setEnabled(false);
+      jtaChatBox.setLineWrap(true);
+      jtaChatBox.setWrapStyleWord(true);
+      jtaChatBox.setText("Waiting for both players to connect");
       
       //final setup for the GUI
       setTitle("Battleship Client by JavaPack Survivors!");
@@ -159,7 +183,7 @@ public class BattleshipClient extends JFrame implements ActionListener {
       setLocationRelativeTo(null);
       setDefaultCloseOperation(EXIT_ON_CLOSE);
       setVisible(true);
-      
+     
       synchronized(syncOn) {
          try {
             syncOn.wait();
@@ -168,7 +192,8 @@ public class BattleshipClient extends JFrame implements ActionListener {
             System.err.println("something went wrong, failed to start game");
          }
       }
-      playing();
+      jlPlayer.setText("Ships locked! Ready for battle.");
+      jlEnemy.setText("Click this grid to fire!");
    }//close constructor
    
    //here is the coordinate inner class! these guys do the heavy lifting
@@ -225,13 +250,12 @@ public class BattleshipClient extends JFrame implements ActionListener {
                if(active) {
                   try {
                   
-                     //if it managed to get this far without throwing an exception, time to place the ship!
-                     //it checks what ship we're placing, then deletes any old one and places a new one
-                     //this is so that you can't have a fleet of like 5 aircraft carriers or smth
-                     //we can add more ships at any time just lmk, I only did 4 cus I think one is the same size?
-                  
                      if(selected == target){
-                        clear(target);
+                        if((enemyCoords[x][y].getBackground() != Color.RED)||(enemyCoords[x][y].getBackground() != Color.WHITE)){
+                        }
+                        else{
+                           clear(target);
+                        }
                         place(target);
                      }
                      else if(selected == carrier) {
@@ -314,12 +338,10 @@ public class BattleshipClient extends JFrame implements ActionListener {
             }
          }
          else if(selected == target){
-         
             if(enemyCoords[x][y].occupied)
                enemyCoords[x][y].setBackground(occ);
             else
                enemyCoords[x][y].setBackground(vac);
-
          }//close else if
       }
       
@@ -356,20 +378,103 @@ public class BattleshipClient extends JFrame implements ActionListener {
             }
          }
       }
-
-         
+      
       //toString for each coordinate, just for our testing purposes, no use in game
       public String toString() {
          return "Coordinate (" + x + ", " + y + ") - Occupied: " + occupied;
       }
    }//close Coordinate class
+
+    public class Receive extends Thread{//open Receive innerclass
+      Socket sock;
+      String message;
+      double turnSelector;
       
-   //getter for coordinates, not sure if we'll need but w/e
-   public Coordinate getCoords(int x, int y) {
-      return coordinates[x][y];
-   }
-   
-   //button stuff, comments are hard
+      public Receive(Socket _sock){//open Receive constructor
+         sock = _sock;
+                  
+         try{//open try
+            setName(InetAddress.getLocalHost() + "");
+            pout = new PrintWriter(new OutputStreamWriter(s.getOutputStream()));
+         }//close try
+         catch(UnknownHostException uhe){//open 1st catch
+            uhe.printStackTrace();
+         }//close 1st catch
+         catch(IOException ioe){//open 1st catch
+            System.err.println("There was a problem instantiating the Chat connection");
+         }//close 2nd catch catch
+      }//close Receive constructor
+         
+      public void run() 
+      {//open Run method (for Receive class?)
+         setInactive();
+         try 
+         {//open try
+            BufferedReader bin = new BufferedReader(new InputStreamReader(sock.getInputStream()));
+            String incoming = bin.readLine();
+            playerNum = Integer.parseInt(incoming);
+            incoming = bin.readLine();
+            turnSelector = Integer.parseInt(incoming);
+            if(turnSelector == playerNum)
+            {
+               setActive();
+            }
+            jtfInput.setEnabled(true);
+            jbSend.setEnabled(true);
+            while(sock.isConnected()) 
+            {//open while
+               message = bin.readLine();
+               if(message.indexOf("[Player") != -1){
+                  jtaChatBox.setText(jtaChatBox.getText() + "\n" + message);
+                  ScrollBar.setValue((ScrollBar.getMaximum() + 5));
+               }
+               else if((message.substring(0, 5)).equals("[WIN]")) {
+                  JOptionPane.showMessageDialog(null, message.substring(5, message.length()));
+                  ScrollBar.setValue((ScrollBar.getMaximum() + 5));
+                  setInactive();
+               }
+               else{
+               System.out.println(message.substring(0,5));
+                  String[] gamestats = message.split(",");
+                  if(playerNum == Integer.parseInt(gamestats[0])){
+                     if(Boolean.parseBoolean(gamestats[1])){
+                        enemyCoords[Integer.parseInt(gamestats[2])][Integer.parseInt(gamestats[3])].setBackground(Color.RED);
+                        pout.println("[MSG]: hit at coordinates: X: " + (Integer.parseInt(gamestats[2])+1) + ", Y: " + (Integer.parseInt(gamestats[3])+1));
+                        pout.flush();
+                        ScrollBar.setValue((ScrollBar.getMaximum() + 5));
+                     }
+                     else{
+                        enemyCoords[Integer.parseInt(gamestats[2])][Integer.parseInt(gamestats[3])].setBackground(Color.WHITE);
+                        pout.println("[MSG]: missed at coordinates: X: " + (Integer.parseInt(gamestats[2])+1) + ", Y: " + (Integer.parseInt(gamestats[3])+1));
+                        pout.flush();
+                        ScrollBar.setValue((ScrollBar.getMaximum() + 5));
+                     }
+                  }
+                  else{
+                     if(Boolean.parseBoolean(gamestats[1])){
+                        coordinates[Integer.parseInt(gamestats[2])][Integer.parseInt(gamestats[3])].setBackground(Color.RED);
+                     }
+                     else{
+                        coordinates[Integer.parseInt(gamestats[2])][Integer.parseInt(gamestats[3])].setBackground(Color.WHITE);
+                     }
+                     setActive();
+                  }                  
+               }
+            }//close while
+            bin.close();
+         }//close try
+         catch(SocketException se){//open 1st catch
+            System.exit(9);
+         }//close 1st catch
+         catch(IOException ioe) 
+         {//open 2nd catch
+            System.out.println("[Unexpected IO error; disconnecting from server]");
+            ioe.printStackTrace();
+         }//close 2nd catch
+      }//close run method for Receive 
+   }//close Receive innerclass
+      
+   //actionPerformed, for all the button events we made earlier
    public void actionPerformed(ActionEvent ae) {
       Object pressedButton = ae.getSource();
       if(pressedButton == jbCarrier) selected = carrier;
@@ -377,79 +482,95 @@ public class BattleshipClient extends JFrame implements ActionListener {
       else if(pressedButton == jbDestroyer) selected = destroyer;
       else if(pressedButton == jbSubmarine) selected = submarine;
       else if(pressedButton == jbPatrolBoat) selected = patrolBoat;
-      else if(pressedButton == jbRotate) {
-         if (rotate == true) rotate = false;
-         else rotate = true;
-      }
       else if(pressedButton == jbTarget) selected = target;
-      else if(pressedButton == jbReady){
-         selected = null;
-         jpFireControl.setVisible(true);
-         jpEnemyGrid.setVisible(true);
-         jpShips.setVisible(false);
-         //MAKE SHIPS OF EACH AND SEND TO SERVER
-         ships[0] = new Ship("Carrier", 5, carrier[0].x, carrier[0].y, carrier[0].placedOrientation);
-         ships[1] = new Ship("Cruiser", 4, cruiser[0].x, cruiser[0].y, cruiser[0].placedOrientation);
-         ships[2] = new Ship("Destroyer", 3, destroyer[0].x, destroyer[0].y, destroyer[0].placedOrientation);
-         ships[3] = new Ship("Submarine", 3, submarine[0].x, submarine[0].y, submarine[0].placedOrientation);
-         ships[4] = new Ship("Patrol Boat", 2, patrolBoat[0].x, patrolBoat[0].y, patrolBoat[0].placedOrientation);
-         try {
-            oos = new ObjectOutputStream(s.getOutputStream());
-            oos.writeObject(ships);
-            oos.flush();
-            ois = new ObjectInputStream(s.getInputStream());
-            win = ois.readBoolean();
-            System.out.println("win");
-         }
-         catch(IOException ioe) {
-            ioe.printStackTrace();
-         }
-         if(!win) {
-            synchronized(syncOn) {
-               syncOn.notifyAll();
-            }
-         }
-      }
-      else if(pressedButton == jbFire){
-         toShoot = new Ship("Target", 1, target[0].x, target[0].y, target[0].placedOrientation);
-         shoot = true;
-      }
+      else if(pressedButton == jbRotate) rotate();
+      else if(pressedButton == jbSend) sendMessage();
+      else if(pressedButton == jbReady) ready();
+      else if(pressedButton == jbFire) fire();
    }
    
-   public void playing()
-   {//open Playing method
-      jlPlayer.setText("Ships locked! Ready for battle.");
-      jlEnemy.setText("Click this grid to fire!");
+   //method to change the orientation of the ships being placed
+   public void rotate(){
+      if (rotate == true) rotate = false;
+         else rotate = true;
+   }//close rotate
+   
+   //method for the chat section of code, to send a message
+   public void sendMessage(){
+   String message = jtfInput.getText();
+      if(message.trim().equals("")) {
+      //Don't send anything, don't want blank messages sent
+      }
+      else{
+         pout.println("[MSG]: \"" +  message  + "\"");
+         pout.flush();
+         jtfInput.setText("");
+      }
+      jtfInput.requestFocus();
+   }//close sendMessage method
+   
+   //Method for when you hit the ready button, prepares the actual playing of the game
+   public void ready(){
+      new Receive(s).start();
+      selected = null;
+      jpGameRunning.setVisible(true);
+      jpEnemyGrid.setVisible(true);
+      jpShips.setVisible(false);
+      //MAKE SHIPS OF EACH AND SEND TO SERVER
+      ships[0] = new Ship("Carrier", 5, carrier[0].x, carrier[0].y, carrier[0].placedOrientation);
+      ships[1] = new Ship("Cruiser", 4, cruiser[0].x, cruiser[0].y, cruiser[0].placedOrientation);
+      ships[2] = new Ship("Destroyer", 3, destroyer[0].x, destroyer[0].y, destroyer[0].placedOrientation);
+      ships[3] = new Ship("Submarine", 3, submarine[0].x, submarine[0].y, submarine[0].placedOrientation);
+      ships[4] = new Ship("Patrol Boat", 2, patrolBoat[0].x, patrolBoat[0].y, patrolBoat[0].placedOrientation);
+      
+      try {
+         ObjectOutputStream oos_ships = new ObjectOutputStream(s.getOutputStream());
+         oos_ships.writeObject(ships);
+         oos_ships.flush();
+      }//close try
+      catch(IOException ioe) {
+         ioe.printStackTrace();
+      }//close catch
+      if(!win) {
+         synchronized(syncOn) {
+            syncOn.notifyAll();
+         }//close sync
+      }//close if
+      jtfInput.requestFocus();
+   }//close ready method
+   
+   //method to create the set of coordinates that would be sent as a ship object
+   public void fire(){
+      toShoot = new Ship("Target", 1, target[0].x, target[0].y, target[0].placedOrientation);
+      pout.println(toShoot.getStartX() + "," + toShoot.getStartY()); //send String instead of toShoot object/Ship
+      pout.flush();
+      target[0].occupied = true;
+      setInactive();
+      jtfInput.requestFocus();
+      //yourTurn = false;
+   }//close fire method
+
+   public void setActive(){//open setActive method
       for(int y = 0; y < coordinates.length; y++) {
          for(int x = 0; x < coordinates.length; x++) {
             coordinates[x][y].active = false;
-            enemyCoords[x][y].active = true;
+            if(!enemyCoords[x][y].occupied) enemyCoords[x][y].active = true;
          }
+         jbFire.setEnabled(true);
+         jbTarget.setEnabled(true);
       }
-      try
-      {//open try
-//          bin = new BufferedReader(new InputStreamReader(s.getInputStream()));
-//          pout = new PrintWriter(new OutputStreamWriter(s.getOutputStream()));
-         //TODO loop
-         while(!win) {
-//             yourTurn = ois.readBoolean();
-            System.out.println(yourTurn);
-            if(shoot)
-            {//open if
-               oos.writeObject(toShoot); //send String instead of toShoot object/Ship
-               oos.flush();
-               shoot = false;
-            }//close if
-         }//close while
-      }//close try
-      catch(IOException ioe)
-      {//open 1st catch
-         ioe.printStackTrace();
-      }//close 2nd catch
-   }//close playing method
-
+   }//close setActive method
+    public void setInactive(){//open setInactive method
+      for(int y = 0; y < coordinates.length; y++) {
+         for(int x = 0; x < coordinates.length; x++) {
+            enemyCoords[x][y].active = false;
+         }
+      jbTarget.setEnabled(false);
+      jbFire.setEnabled(false);
+      }
+   }//close setInactive method
    
    public static void main(String[] args) {
       new BattleshipClient();
    }
-}
+}//close main

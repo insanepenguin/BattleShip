@@ -1,4 +1,3 @@
-
 import java.util.*;
 import java.net.*;
 import java.io.*;
@@ -7,50 +6,32 @@ import java.awt.*;
 import java.awt.event.*;
 //SERVER
 
-//SERVER RECIEVES ARRAY OF SHIPS
-
-//SERVER BUILDS THE GRID
-//play game method, once both players are built sleep (short period of time)
-//game starts (do-while, while(win-condition: false) -> make it a thread?
-//take turn methods? (2 ints that are pushed into the method -> shots coordinates)
-//player1 take turn? player2 take turn? 
-//on win-condition we break out, send health pools back into the client.
-//Currently NO TURNS
-
-//WHEREVER THERE IS A SHIP IT WILL PLACE A TRUE, EVERYWHERE ELSE WILL BE FALSE
-
-//server waits until it gets both array, builds them in the order they come in
-
-//wait for turns, after they hit the ready (Message back from server confirmation that the game is starting/grid was valid)
-
 public class BattleshipServer
 {//open class
    Boolean win_Condition = false;
-   int player1HP = 17;
-   int player2HP = 17;
-   BattleshipClient player2;
+   int player1Hp = 17;
+   int player2Hp = 17;
    Boolean[][] player1Field = new Boolean[10][10];
    Boolean[][] player2Field = new Boolean[10][10];
    Boolean yourTurn = true;
    Boolean hit = false;
-   String winner;
+   String sync = new String("");
+   String currentMsg = ""; // this string is for the chat messages sent out to the clients
    
    ServerSocket ss;
    Socket cs;
-   ObjectInputStream ois;                  //declare globally!
-   ObjectOutputStream oos;
    Ship[] shipsReadIn;
    
    private JFrame jfServerFrame = new JFrame();
    private JTextArea jtaDiagnostics = new JTextArea(20,35);
    private JScrollPane jspScroller = new JScrollPane(jtaDiagnostics, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
    private JScrollBar ScrollBar = jspScroller.getVerticalScrollBar();
-   private JPanel jpCenter = new JPanel(); 
+   private JPanel jpCenter = new JPanel();
 
    //may need to take in Player1 and Player2??
    BattleshipServer(/* Maybe take an Array of Coordinates for the ships? or an Array of Ships if ships implemented properly*/)
    {//open constructor
-          
+         
       //This should build a new version of the Grid from Grid, for each player!
       //This will deal with hit-handling, saving grids, HP, running the game
       //method for running game (Do-While)
@@ -63,19 +44,20 @@ public class BattleshipServer
             player1Field[y][z] = false;
             player2Field[y][z] = false;
          }//close 2nd for
-      }//close 1st for           
+      }//close 1st for          
 
       jfServerFrame.setLayout(new BorderLayout(5,10));
       jtaDiagnostics.setEnabled(false);
       jpCenter.add(jspScroller);
       jfServerFrame.add(jpCenter, BorderLayout.CENTER);
-      
+     
       jfServerFrame.setTitle("Battleship Server by JavaPack Survivors");
       jfServerFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
       jfServerFrame.setLocationRelativeTo(null);
       jfServerFrame.pack();
       jfServerFrame.setVisible(true);
       Thread[] playersReady = new Thread[2];
+      Socket[] sockets = new Socket[2];
       try
       {//open try
          jtaDiagnostics.setText("Server launched @" + InetAddress.getLocalHost().getHostAddress());
@@ -83,7 +65,8 @@ public class BattleshipServer
          for(int i = 0; i < 2; i++)
          {//open for loop
             cs = ss.accept();
-            Reciever thread = new Reciever(cs, i);
+            sockets[i] = cs;
+            ShipReceiver thread = new ShipReceiver(cs, i);
             playersReady[i] = thread;
             thread.start();
             console("Player " + (i + 1) + " Connected @" + cs.getInetAddress());       //update text area saying someone connected
@@ -93,72 +76,51 @@ public class BattleshipServer
       {//open catch
          ioe.printStackTrace();
       }//close catch
-      console("Both players connected"); 
-      
-      //waiting for the players to send their ships 
-      for(int i = 0; i < 2; i++) {
-         try {
-            playersReady[i].join();
-            System.out.println("WE HAVE JOINED"); // test statement
-         }
-         catch(InterruptedException ie) {
-            ie.printStackTrace();
-         }
+      console("Both players connected");
+     
+      int goesFirst = (int)((Math.random() * 2) + 1);
+     
+      //waiting for the players to send their ships
+      try {
+         playersReady[0].join();
+         playersReady[1].join();
+         new Connection(sockets[0], 1, goesFirst).start();
+         new Connection(sockets[1], 2, goesFirst).start();
       }
+      catch(InterruptedException ie) {
+         ie.printStackTrace();
+      }
+     
       console("Ships recieved, starting game");
       System.out.println("Ships recieved, starting game");
-      
-      /*AFTER THIS POINT IS THE GAME LOGIC, IN ORDER
-      THIS IS A VERY IMPORTANT BLOCK OF CODE.
-      THIS IS WHERE THE LOGIC OF THE GAME IS ACTUALLY HAPPENING
-      PAY ATTENTION HERE!
-      THIS IS ALL THE NEW STUFF (plus hitDetection Method)*/
-      try{//open try  
-         ois = new ObjectInputStream(cs.getInputStream());
-         oos = new ObjectOutputStream(cs.getOutputStream());
-            oos.writeBoolean(win_Condition);
-            System.out.println("writing Win Condition");
-         while(!win_Condition){//open while loop
-            oos.writeBoolean(yourTurn);
-            System.out.println("Test");
-            String inCoords = ois.readUTF();
-            String[] Coords = inCoords.split(", ");
-            int xCoord = Integer.parseInt(Coords[0]);
-            int yCoord = Integer.parseInt(Coords[1]);
-            console("Coordinates to shoot are " + xCoord + " and " + yCoord);
-            hitDetection(xCoord, yCoord);
-            oos.writeBoolean(win_Condition);
-            oos.flush();
-         }//close while loop
-         oos.writeUTF(winner);
-      }//close try
-      catch(IOException ioe){//open catch
-         ioe.printStackTrace();
-      }//close catch
-      
+
    }//close constructor
    
    //a method so we don't have to be like "jtaDiagnostics.setText(jtaDiagnostics.getText() + '\n' + w/e) every time lol
-   public void console(String msg) 
+   public void console(String msg)
    {//open console updating method
       jtaDiagnostics.setText(jtaDiagnostics.getText() + '\n' + msg);
    }//close console updating method
    
-   public class Reciever extends Thread {
+   public class ShipReceiver extends Thread {
       Socket sock;
       int player;
-      
-      public Reciever(Socket cs, int i) {
+     
+      public ShipReceiver(Socket cs, int i) {
          cs = sock;
          player = i;
       }
-      
+     
+      public Socket getSock() {
+         return sock;
+      }
+     
       public void run() {
          try
          {//open try
-            ois = new ObjectInputStream(cs.getInputStream());                       //instantiate locally!
+            ObjectInputStream shipReader = new ObjectInputStream(cs.getInputStream());                       //instantiate locally!
             System.out.println("we should be reading in a new object of ship arrays");
-            Object incoming = ois.readObject();
+            Object incoming = shipReader.readObject();
             System.out.println(incoming);
             if(incoming instanceof Ship[])                     //compare if what came in is an instance of an array of the Ship class
             {//open if                                         if it is, make our Ship array equal to the incoming object casted as a ship array
@@ -200,7 +162,7 @@ public class BattleshipServer
             {//open else                                         if it isn't, print an error message to the text area
                console("ERROR! OBJECT READ IN WASN'T A SHIP!");
             }//close else
-            ois.close();
+            // shipReader.close();
          }//close try
          catch(IOException ioe)
          {//open catch
@@ -213,45 +175,130 @@ public class BattleshipServer
       }
    }
    
-   //This is the code that will handle if something is hit
-   public void hitDetection(int x, int y){//open hitDetection method
-      if(yourTurn){//open 1st if
-         console("Shot taken at " + x + " " + y);
-         if(player2Field[x][y]){//open 2nd if
-            hit = true;
-            player2HP--;
-            console("Hit!");
-            if(player2HP == 0){//open 3rd if
-               win_Condition = true;
-               winner = "Player 1 has won!";
-            }//close 3rd if
-         }//close 2nd if
-         console("Miss!");
-         yourTurn = false;
-      }//close 1st if
-      else{
-         console("Shot taken at " + x + " " + y);
-         if(player1Field[x][y]){//open 1st if
-            hit = true;
-            player1HP--;
-            console("Hit!");
-            if(player1HP == 0){//open 2nd if
-               win_Condition = true;
-               winner = "Player 2 has won!";
-            }//close 2nd if
-         }//close 1st if
-         console("Miss!");
-         yourTurn = true;
-      }//close else
-   }//close hitDetection method
+   //connection inner class, this handles everything chat related
+   public class Connection extends Thread {
    
-   //If we don't thread it we can just use Player1.getHP() / Player2.getHP(), whichever player's current turn is going
-   // if we thread it, we should be able to do Player.getHP() regardless.
-   //Method? or just Check at start of each turn?
-   //if Player.getHP() == 0
-   //    win_Condition = true;
-   //else
-   //    
+     Socket sock;
+     int playerNum;
+     int first;
+     
+      public Connection(Socket _cs, int _playerNum, int _first) {
+         playerNum = _playerNum;
+         sock = _cs;
+         first = _first;
+         setName("[Connection " + playerNum + "]");
+      }
+     
+      public void run() {
+         //starts the reciever, then handles sending of chat data
+         new Reciever().start();
+         try {
+            PrintWriter chatWriter = new PrintWriter(new OutputStreamWriter(sock.getOutputStream()));
+            chatWriter.println(playerNum);
+            chatWriter.flush();
+            chatWriter.println(first);
+            chatWriter.flush();
+            // int playerNum = integer.parseInt(incoming.substring(incoming.indexOf(":")));
+            console(getName() + "initialized");
+            while(sock.isConnected()) {
+               synchronized(sync) {
+                  sync.wait(); //when the reciever recieves something, it updates the global string currentmsg then notifies
+               }
+               chatWriter.println(currentMsg); //once notified, the sender sends out msg to the clients
+               chatWriter.flush();
+               console("message send out");
+            }
+         }
+         catch(InterruptedException ie) {
+            System.err.println(getName() + "Interrupted Exception");
+            ie.printStackTrace();
+         }
+         catch(IOException ioe) {
+            System.err.println(getName() + "IO Error");
+            ioe.printStackTrace();
+         }
+      }
+     
+      public boolean hitDetection(int x, int y){//open hitDetection method
+         if(playerNum == 1) {
+            if(player2Field[x][y]){//open 2nd if
+               console("Hit!");
+               player2Hp--;
+               return true;
+            }
+            else {
+               console("Miss!");
+               return false;
+            }
+         }
+         else {
+            if(player1Field[x][y]){//open 2nd if
+               console("Hit!");
+               player1Hp--;
+               return true;
+            }
+            else {
+               console("Miss!");
+               return false;
+            }
+         }
+      }
+     
+      //inner class controlling the thread that recieves chat data
+      public class Reciever extends Thread {
+         String winner;
+         
+         public Reciever() {
+            setName("[Reciever " + playerNum + "]");
+         }
+         
+         public void run() {
+            try {
+               BufferedReader chatReader = new BufferedReader(new InputStreamReader(sock.getInputStream()));
+               console(getName() + "initialized");
+
+                  while(sock.isConnected()) {
+                     String incoming = chatReader.readLine();
+                     console(incoming);
+                     if(incoming.indexOf("[MSG]:") != -1) {
+                        synchronized(sync) {
+                           currentMsg = "[Player " + playerNum + "]: " + incoming.substring(7);
+                           sync.notifyAll();
+                        }
+                     }
+                     else {
+                     String[] Coords = incoming.split(",");
+                     int xCoord = Integer.parseInt(Coords[0]);
+                     int yCoord = Integer.parseInt(Coords[1]);                    
+                     boolean hitMiss = hitDetection(xCoord, yCoord);
+                     
+                     synchronized(sync) {
+                        currentMsg = playerNum + "," + hitMiss + "," + xCoord + "," + yCoord;
+                        sync.notifyAll();
+                     }
+                     if(player1Hp == 0 || player2Hp == 0) {
+                        if(player1Hp ==0) {
+                           winner = "[WIN]Player 2 wins!";
+                        }
+                        else {
+                           winner = "[WIN]Player 1 wins!";
+                        }
+                        synchronized(sync) {
+                           currentMsg = winner;
+                           sync.notifyAll();
+                        }
+                     }
+                  }
+               }
+            }
+            catch(IOException ioe) {
+               System.err.println(getName() + " IO Error");
+               ioe.printStackTrace();
+            }
+         }
+      }
+   }
+   
    public static void main(String[] args)
    {//open main
       new BattleshipServer();
