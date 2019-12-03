@@ -92,7 +92,6 @@ public class BattleshipServer
       }
      
       console("Ships recieved, starting game");
-      System.out.println("Ships recieved, starting game");
 
    }//close constructor
    
@@ -119,13 +118,10 @@ public class BattleshipServer
          try
          {//open try
             ObjectInputStream shipReader = new ObjectInputStream(cs.getInputStream());                       //instantiate locally!
-            System.out.println("we should be reading in a new object of ship arrays");
             Object incoming = shipReader.readObject();
-            System.out.println(incoming);
             if(incoming instanceof Ship[])                     //compare if what came in is an instance of an array of the Ship class
             {//open if                                         if it is, make our Ship array equal to the incoming object casted as a ship array
                shipsReadIn = (Ship[])incoming;                 //and print it out to the text area using the toString method in a for loop
-               System.out.println("Recieved ships\n" + shipsReadIn[0] + "\n" + shipsReadIn[1] + "\n" +shipsReadIn[2] + "\n" +shipsReadIn[3] + "\n" +shipsReadIn[4]);
                for(int j = 0; j < shipsReadIn.length; j++) {   //FALSE for Orientation = HORIZONTAL, TRUE for Orientation = Vertical
                   //this is setting the boolean values of the grids to true for the ships placement!
                   for(int i = 0; i < shipsReadIn[j].getCoordinates().length; i++) {
@@ -140,23 +136,7 @@ public class BattleshipServer
                      }
                   }//close second for loop
                }//close first for loop
-               
-               //TEST SHIT HERE
-               System.out.println("PLAYER 1 GRID");
-               for(int y = 0; y < 10; y++) {
-                  for(int x = 0; x < 10; x++) {
-                     System.out.print(String.format("%6b",player1Field[x][y]));
-                  }
-                  System.out.print("\n");
-               }
-               System.out.println("\nPLAYER 2 GRID");
-               for(int y = 0; y < 10; y++) {
-                  for(int x = 0; x < 10; x++) {
-                     System.out.print(String.format("%6b",player2Field[x][y]));
-                  }
-                  System.out.print("\n");
-               }
-               System.out.println("\n\n\n");
+
             }//close if
             else
             {//open else                                         if it isn't, print an error message to the text area

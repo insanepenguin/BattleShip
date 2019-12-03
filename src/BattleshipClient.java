@@ -60,8 +60,6 @@ public class BattleshipClient extends JFrame implements ActionListener {
    private JButton jbPatrolBoat = new JButton("Patrol Boat");
    private JButton jbRotate = new JButton("Rotate");
    private JButton jbReady = new JButton("READY");
-   private JButton jbTarget = new JButton("Target");
-   private JButton jbFire = new JButton("Fire");
    
    //Chat Gui stuff
    private JTextArea jtaChatBox = new JTextArea(25,17);
@@ -138,8 +136,6 @@ public class BattleshipClient extends JFrame implements ActionListener {
       jbPatrolBoat.addActionListener(this);
       jbRotate.addActionListener(this);
       jbReady.addActionListener(this);
-      jbTarget.addActionListener(this);
-      jbFire.addActionListener(this);
       jbSend.addActionListener(this);
       jbReady.setEnabled(false);
       jpShips.add(jbCarrier);
@@ -155,10 +151,6 @@ public class BattleshipClient extends JFrame implements ActionListener {
       jtfInput.setEnabled(false); 
       jpGameRunningCenter.add(jbSend);
       jbSend.setEnabled(false);
-      jpGameRunningSouth.add(jbTarget);
-      jbTarget.setEnabled(false);
-      jpGameRunningSouth.add(jbFire);
-      jbFire.setEnabled(false);
       jpGameRunning.add(jpGameRunningCenter, BorderLayout.CENTER);
       jpGameRunning.add(jpGameRunningSouth, BorderLayout.SOUTH);
       JPanel jpCenter = new JPanel();
@@ -193,7 +185,6 @@ public class BattleshipClient extends JFrame implements ActionListener {
          }
       }
       jlPlayer.setText("Ships locked! Ready for battle.");
-      jlEnemy.setText("Click this grid to fire!");
    }//close constructor
    
    //here is the coordinate inner class! these guys do the heavy lifting
@@ -254,6 +245,7 @@ public class BattleshipClient extends JFrame implements ActionListener {
                            clear(target);
                         }
                         place(target);
+                        fire();
                      }
                      else if(selected == carrier) {
                         check();
@@ -431,7 +423,6 @@ public class BattleshipClient extends JFrame implements ActionListener {
                   setInactive();
                }
                else{
-               System.out.println(message.substring(0,5));
                   String[] gamestats = message.split(",");
                   if(playerNum == Integer.parseInt(gamestats[0])){
                      if(Boolean.parseBoolean(gamestats[1])){
@@ -465,8 +456,7 @@ public class BattleshipClient extends JFrame implements ActionListener {
          }//close 1st catch
          catch(IOException ioe) 
          {//open 2nd catch
-            System.out.println("[Unexpected IO error; disconnecting from server]");
-            ioe.printStackTrace();
+            System.err.println("[Unexpected IO error; disconnecting from server]");
          }//close 2nd catch
       }//close run method for Receive 
    }//close Receive innerclass
@@ -479,11 +469,9 @@ public class BattleshipClient extends JFrame implements ActionListener {
       else if(pressedButton == jbDestroyer) selected = destroyer;
       else if(pressedButton == jbSubmarine) selected = submarine;
       else if(pressedButton == jbPatrolBoat) selected = patrolBoat;
-      else if(pressedButton == jbTarget) selected = target;
       else if(pressedButton == jbRotate) rotate();
       else if(pressedButton == jbSend) sendMessage();
       else if(pressedButton == jbReady) ready();
-      else if(pressedButton == jbFire) fire();
    }
    
    //method to change the orientation of the ships being placed
@@ -533,6 +521,7 @@ public class BattleshipClient extends JFrame implements ActionListener {
             syncOn.notifyAll();
          }//close sync
       }//close if
+      selected = target;
       jtfInput.requestFocus();
    }//close ready method
    
@@ -553,8 +542,7 @@ public class BattleshipClient extends JFrame implements ActionListener {
             coordinates[x][y].active = false;
             if(!enemyCoords[x][y].occupied) enemyCoords[x][y].active = true;
          }
-      jbFire.setEnabled(true);
-      jbTarget.setEnabled(true);
+         jlEnemy.setText("YOUR TURN! Click this Grid to fire at your target!");
    }//close setActive method
       
    }//close setInactive method
@@ -563,9 +551,8 @@ public class BattleshipClient extends JFrame implements ActionListener {
          for(int x = 0; x < coordinates.length; x++) {
             enemyCoords[x][y].active = false;
          }
-      jbTarget.setEnabled(false);
-      jbFire.setEnabled(false);
       }
+      jlEnemy.setText("ENEMY TURN! Waiting to be shot at!");
    }//close setInactive method
    
    public static void main(String[] args) {
