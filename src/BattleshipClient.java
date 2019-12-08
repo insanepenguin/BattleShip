@@ -422,6 +422,11 @@ public class BattleshipClient extends JFrame implements ActionListener {
                   ScrollBar.setValue((ScrollBar.getMaximum() + 5));
                   setInactive();
                }
+//                else if((message.substring(0, 5)).equals("[RIP]")) {
+//                   JOptionPane.showMessageDialog(null, "Opponent has Disconnected :(");
+//                   ScrollBar.setValue((ScrollBar.getMaximum() + 5));
+//                   setInactive();
+//                }
                else{
                   String[] gamestats = message.split(",");
                   if(playerNum == Integer.parseInt(gamestats[0])){
@@ -452,7 +457,8 @@ public class BattleshipClient extends JFrame implements ActionListener {
             bin.close();
          }//close try
          catch(SocketException se){//open 1st catch
-            System.exit(9);
+            JOptionPane.showMessageDialog(null, "Server has closed, possibly due to an error. To have another go at the game, restart and try again.");
+            System.exit(0);
          }//close 1st catch
          catch(IOException ioe) 
          {//open 2nd catch
