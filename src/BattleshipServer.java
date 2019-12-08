@@ -86,6 +86,7 @@ public class BattleshipServer
          playersReady[1].join();
          new Connection(sockets[0], 1, goesFirst).start();
          new Connection(sockets[1], 2, goesFirst).start();
+         
       }
       catch(InterruptedException ie) {
          ie.printStackTrace();
@@ -144,6 +145,10 @@ public class BattleshipServer
             }//close else
             // shipReader.close();
          }//close try
+         catch(SocketException se)
+         {//open catch
+            console("Player " + player + " has DC'd during the startup phase :(");
+         }//close catch
          catch(IOException ioe)
          {//open catch
             ioe.printStackTrace();
@@ -186,7 +191,7 @@ public class BattleshipServer
                }
                chatWriter.println(currentMsg); //once notified, the sender sends out msg to the clients
                chatWriter.flush();
-               console("message send out");
+               console("message sent out");
             }
          }
          catch(InterruptedException ie) {
@@ -272,6 +277,17 @@ public class BattleshipServer
                      }
                   }
                }
+            }
+            //player disconnects are handled HERE
+            catch(SocketException se) {
+            
+//                synchronized(sync) {
+//                   //send a code to the remaining client that an error has occurred
+//                   currentMsg = "[RIP]";
+//                   sync.notifyAll();
+//                }
+               //close the server so we can try again!
+               System.exit(0);
             }
             catch(IOException ioe) {
                System.err.println(getName() + " IO Error");
