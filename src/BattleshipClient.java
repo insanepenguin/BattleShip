@@ -555,10 +555,11 @@ public class BattleshipClient extends JFrame implements ActionListener {
     public void setInactive(){//open setInactive method
       for(int y = 0; y < coordinates.length; y++) {
          for(int x = 0; x < coordinates.length; x++) {
+            coordinates[x][y].active = false;
             enemyCoords[x][y].active = false;
          }
       }
-      jlEnemy.setText("ENEMY TURN! Waiting to be shot at!");
+      jlEnemy.setText("Waiting for opponent...");
    }//close setInactive method
    
    public static void main(String[] args) {
