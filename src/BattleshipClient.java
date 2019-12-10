@@ -450,6 +450,7 @@ public class BattleshipClient extends JFrame implements ActionListener {
                      else{
                         coordinates[Integer.parseInt(gamestats[2])][Integer.parseInt(gamestats[3])].setBackground(Color.WHITE);
                      }
+                     sleep(2000);
                      setActive();
                   }                  
                }
@@ -463,7 +464,13 @@ public class BattleshipClient extends JFrame implements ActionListener {
          catch(IOException ioe) 
          {//open 2nd catch
             System.err.println("[Unexpected IO error; disconnecting from server]");
+            System.exit(0);
          }//close 2nd catch
+         catch(InterruptedException ie)
+         {//open 3rd catch
+            System.err.println("[Unexpected Interrupted exception; disconnecting from server]");
+            System.exit(0);
+         }//close 3rd catch
       }//close run method for Receive 
    }//close Receive innerclass
       
